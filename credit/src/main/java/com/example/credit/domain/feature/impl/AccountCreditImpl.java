@@ -1,6 +1,6 @@
 package com.example.credit.domain.feature.impl;
 
-import com.example.credit.domain.feature.AccountDebit;
+import com.example.credit.domain.feature.AccountCredit;
 import com.example.credit.domain.feature.FindAccountById;
 import com.example.credit.domain.model.Account;
 import com.example.credit.domain.model.AccountRepository;
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 
 @Named
 @AllArgsConstructor
-public class AccountDebitImpl implements AccountDebit {
+public class AccountCreditImpl implements AccountCredit {
 
   private final AccountRepository accountRepository;
   private final FindAccountById findAccountById;
@@ -23,9 +23,9 @@ public class AccountDebitImpl implements AccountDebit {
     return findAccountById
         .handle(client.getId())
         .flatMap(
-            credit -> {
-              credit.debit(amount);
-              return accountRepository.update(credit).thenReturn(credit);
+            account -> {
+              account.credit(amount);
+              return accountRepository.update(account).thenReturn(account);
             });
   }
 }
