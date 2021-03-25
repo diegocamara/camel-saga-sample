@@ -1,0 +1,8 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:paymentsdb}
+    username: ${DATABASE_USERNAME:payments_service}
+    password: ${DATABASE_PASSWORD:payments_service_123}
+

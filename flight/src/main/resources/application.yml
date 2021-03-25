@@ -1,0 +1,8 @@
+server:
+  port: ${SERVER_PORT:8081}
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:flightdb}
+    username: ${DATABASE_USERNAME:flight_service}
+    password: ${DATABASE_PASSWORD:flight_service_123}
+
