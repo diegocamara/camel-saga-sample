@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class R2DBCEntityTemplateAccountRepository implements AccountRepository {
 
-  private final ReactiveCreditRepository reactiveCreditRepository;
+  private final ReactiveCreditRepository reactiveAccountRepository;
   private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
   @Override
@@ -24,19 +24,19 @@ public class R2DBCEntityTemplateAccountRepository implements AccountRepository {
 
   @Override
   public Mono<Void> update(Account account) {
-    return reactiveCreditRepository.save(new AccountTable(account)).then();
+    return reactiveAccountRepository.save(new AccountTable(account)).then();
   }
 
   @Override
   public Mono<Account> findByClient(Client client) {
-    return reactiveCreditRepository.findById(client.getId()).map(this::credit);
+    return reactiveAccountRepository.findById(client.getId()).map(this::account);
   }
 
-  private Account credit(AccountTable accountTable) {
-    final var credit = new Account();
-    credit.setClient(new Client(accountTable.getId()));
-    credit.setUsed(accountTable.getUsed());
-    credit.setMaxLimit(accountTable.getMaxLimit());
-    return credit;
+  private Account account(AccountTable accountTable) {
+    final var account = new Account();
+    account.setClient(new Client(accountTable.getId()));
+    account.setUsed(accountTable.getUsed());
+    account.setMaxLimit(accountTable.getMaxLimit());
+    return account;
   }
 }

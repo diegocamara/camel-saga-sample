@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
-@Table("ACCOUNT")
+@Table("ACCOUNTS")
 @NoArgsConstructor
 public class AccountTable {
   @Id private UUID id;

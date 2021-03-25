@@ -9,13 +9,15 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.util.UUID;
 
 @Data
-@Table("OPERATION")
+@Table("OPERATIONS")
 @NoArgsConstructor
 public class OperationTable {
   @Id private UUID id;
 
   @Column("OPERATION_NAME")
   private Operation operation;
+
+  private AccountTable account;
 
   public OperationTable(UUID id, Operation operation) {
     this.id = id;

@@ -1,19 +1,22 @@
-CREATE USER credit_service;
-ALTER USER credit_service WITH PASSWORD 'credit_service_123';
-GRANT ALL PRIVILEGES ON DATABASE creditdb TO credit_service;
+CREATE USER accounts_service;
+ALTER USER accounts_service WITH PASSWORD 'accounts_service_123';
+CREATE DATABASE accountsdb;
+GRANT ALL PRIVILEGES ON DATABASE accountsdb TO accounts_service;
 
-CREATE TABLE ACCOUNT (
-    ID UUID NOT NULL,
-    USED NUMERIC NOT NULL,
-    MAX_LIMIT NUMERIC NOT NULL,
-    CONSTRAINT CREDIT_PK PRIMARY KEY (ID)
+\c accountsdb;
+
+CREATE TABLE accounts (
+    id UUID NOT NULL,
+    used NUMERIC NOT NULL,
+    max_limit NUMERIC NOT NULL,
+    CONSTRAINT accounts_pk PRIMARY KEY (id)
 );
 
-CREATE TABLE OPERATION (
-    ID UUID NOT NULL,
-    OPERATION_NAME VARCHAR(255) NOT NULL,
-    CONSTRAINT OPERATION_PK PRIMARY KEY (ID)
+CREATE TABLE operations (
+    id UUID NOT NULL,    
+    operation_name VARCHAR(255) NOT NULL,
+    CONSTRAINT operations_pk PRIMARY KEY (id)    
 );
 
 
-INSERT INTO ACCOUNT VALUES ('2aa2ae05-3761-4d4a-926b-6a27031192e5', 0, 100)
+INSERT INTO accounts VALUES ('2aa2ae05-3761-4d4a-926b-6a27031192e5', 0, 100);
