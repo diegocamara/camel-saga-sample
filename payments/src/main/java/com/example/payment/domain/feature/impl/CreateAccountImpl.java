@@ -3,7 +3,7 @@ package com.example.payment.domain.feature.impl;
 import com.example.payment.domain.feature.CreateAccount;
 import com.example.payment.domain.model.Account;
 import com.example.payment.domain.model.AccountRepository;
-import com.example.payment.domain.model.Client;
+import com.example.payment.domain.model.Customer;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -17,15 +17,15 @@ public class CreateAccountImpl implements CreateAccount {
   private final AccountRepository accountRepository;
 
   @Override
-  public Mono<Account> handle(Client client, BigDecimal limit) {
-    return createAccount(client, limit)
+  public Mono<Account> handle(Customer customer, BigDecimal limit) {
+    return createAccount(customer, limit)
         .flatMap(credit -> accountRepository.save(credit).thenReturn(credit));
   }
 
-  private Mono<Account> createAccount(Client client, BigDecimal limit) {
-    final var credit = new Account();
-    credit.setClient(client);
-    credit.setMaxLimit(limit);
-    return Mono.just(credit);
+  private Mono<Account> createAccount(Customer customer, BigDecimal limit) {
+    final var account = new Account();
+    account.setCustomer(customer);
+    account.setMaxLimit(limit);
+    return Mono.just(account);
   }
 }

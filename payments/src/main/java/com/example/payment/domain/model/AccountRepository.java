@@ -7,5 +7,5 @@ public interface AccountRepository {
 
   Mono<Void> update(Account account);
 
-  Mono<Account> findByClient(Client client);
+  Mono<Account> findByCustomer(Customer customer);
 }

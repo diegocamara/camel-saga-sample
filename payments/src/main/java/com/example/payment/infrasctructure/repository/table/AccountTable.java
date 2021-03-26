@@ -21,7 +21,7 @@ public class AccountTable {
   private BigDecimal maxLimit;
 
   public AccountTable(Account account) {
-    this.id = account.getClient().getId();
+    this.id = account.getCustomer().getId();
     this.used = account.getUsed();
     this.maxLimit = account.getMaxLimit();
   }

@@ -2,7 +2,7 @@ package com.example.payment.infrasctructure.repository.impl;
 
 import com.example.payment.domain.model.Account;
 import com.example.payment.domain.model.AccountRepository;
-import com.example.payment.domain.model.Client;
+import com.example.payment.domain.model.Customer;
 import com.example.payment.infrasctructure.repository.reactive.ReactiveAccountRepository;
 import com.example.payment.infrasctructure.repository.table.AccountTable;
 import lombok.AllArgsConstructor;
@@ -28,13 +28,13 @@ public class R2DBCEntityTemplateAccountRepository implements AccountRepository {
   }
 
   @Override
-  public Mono<Account> findByClient(Client client) {
-    return reactiveAccountRepository.findById(client.getId()).map(this::account);
+  public Mono<Account> findByCustomer(Customer customer) {
+    return reactiveAccountRepository.findById(customer.getId()).map(this::account);
   }
 
   private Account account(AccountTable accountTable) {
     final var account = new Account();
-    account.setClient(new Client(accountTable.getId()));
+    account.setCustomer(new Customer(accountTable.getId()));
     account.setUsed(accountTable.getUsed());
     account.setMaxLimit(accountTable.getMaxLimit());
     return account;

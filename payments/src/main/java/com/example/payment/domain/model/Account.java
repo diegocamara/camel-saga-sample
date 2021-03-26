@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 @Data
 public class Account {
-  private Client client;
+  private Customer customer;
   private BigDecimal used;
   private BigDecimal maxLimit;
 

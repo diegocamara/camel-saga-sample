@@ -7,6 +7,6 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class Client {
+public class Customer {
   private UUID id;
 }

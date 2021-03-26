@@ -4,7 +4,7 @@ import com.example.payment.domain.exception.AccountNotFoundException;
 import com.example.payment.domain.feature.FindAccountById;
 import com.example.payment.domain.model.Account;
 import com.example.payment.domain.model.AccountRepository;
-import com.example.payment.domain.model.Client;
+import com.example.payment.domain.model.Customer;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -20,7 +20,7 @@ public class FindAccountByIdImpl implements FindAccountById {
   @Override
   public Mono<Account> handle(UUID id) {
     return accountRepository
-        .findByClient(new Client(id))
+        .findByCustomer(new Customer(id))
         .switchIfEmpty(Mono.error(new AccountNotFoundException()));
   }
 }

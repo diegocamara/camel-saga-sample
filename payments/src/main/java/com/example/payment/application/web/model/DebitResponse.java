@@ -9,18 +9,18 @@ import java.util.UUID;
 
 @Data
 public class DebitResponse {
-  private UUID client;
+  private UUID customer;
   private BigDecimal used;
   private UUID transactionId;
 
   public DebitResponse(Account account, UUID transactionId) {
-    this.client = account.getClient().getId();
+    this.customer = account.getCustomer().getId();
     this.used = account.getUsed();
     this.transactionId = transactionId;
   }
 
   public DebitResponse(OperationTable operationTable) {
-    this.client = operationTable.getAccount().getId();
+    this.customer = operationTable.getAccount().getId();
     this.used = operationTable.getAccount().getUsed();
     this.transactionId = operationTable.getId();
   }

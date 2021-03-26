@@ -7,7 +7,7 @@ import com.example.payment.application.web.model.DebitResponse;
 import com.example.payment.domain.feature.AccountCredit;
 import com.example.payment.domain.feature.AccountDebit;
 import com.example.payment.domain.feature.FindAccountById;
-import com.example.payment.domain.model.Client;
+import com.example.payment.domain.model.Customer;
 import com.example.payment.infrasctructure.repository.OperationRepository;
 import com.example.payment.infrasctructure.repository.table.Operation;
 import lombok.AllArgsConstructor;
@@ -27,37 +27,37 @@ public class AccountController {
   private final AccountDebit accountDebit;
   private final OperationRepository operationRepository;
 
-  @PatchMapping("/{clientId}/credit")
+  @PatchMapping("/{customerId}/credit")
   public Mono<ResponseEntity<CreditResponse>> credit(
-      @PathVariable("clientId") UUID clientId,
+      @PathVariable("customerId") UUID customerId,
       @RequestHeader("transaction-reference") UUID transactionReference,
       @RequestBody CreditRequest creditRequest) {
     return operationRepository
         .create(transactionReference, Operation.CREDIT)
-        .then(accountCredit.handle(new Client(clientId), creditRequest.getAmount()))
+        .then(accountCredit.handle(new Customer(customerId), creditRequest.getAmount()))
         .map(account -> ResponseEntity.ok(new CreditResponse(account, transactionReference)))
         .onErrorResume(
             throwable ->
                 findAccountById
-                    .handle(clientId)
+                    .handle(customerId)
                     .map(
                         account ->
                             ResponseEntity.ok(new CreditResponse(account, transactionReference))));
   }
 
-  @PatchMapping("/{clientId}/debit")
+  @PatchMapping("/{customerId}/debit")
   public Mono<ResponseEntity<DebitResponse>> debit(
-      @PathVariable("clientId") UUID clientId,
+      @PathVariable("customerId") UUID customerId,
       @RequestHeader("transaction-reference") UUID transactionReference,
       @RequestBody DebitRequest debitRequest) {
     return operationRepository
-        .create(transactionReference, Operation.CREDIT)
-        .then(accountDebit.handle(new Client(clientId), debitRequest.getAmount()))
+        .create(transactionReference, Operation.DEBIT)
+        .then(accountDebit.handle(new Customer(customerId), debitRequest.getAmount()))
         .map(account -> ResponseEntity.ok(new DebitResponse(account, transactionReference)))
         .onErrorResume(
             throwable ->
                 findAccountById
-                    .handle(clientId)
+                    .handle(customerId)
                     .map(
                         account ->
                             ResponseEntity.ok(new DebitResponse(account, transactionReference))));

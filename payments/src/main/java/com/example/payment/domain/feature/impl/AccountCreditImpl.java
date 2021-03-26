@@ -4,7 +4,7 @@ import com.example.payment.domain.feature.AccountCredit;
 import com.example.payment.domain.feature.FindAccountById;
 import com.example.payment.domain.model.Account;
 import com.example.payment.domain.model.AccountRepository;
-import com.example.payment.domain.model.Client;
+import com.example.payment.domain.model.Customer;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -19,9 +19,9 @@ public class AccountCreditImpl implements AccountCredit {
   private final FindAccountById findAccountById;
 
   @Override
-  public Mono<Account> handle(Client client, BigDecimal amount) {
+  public Mono<Account> handle(Customer customer, BigDecimal amount) {
     return findAccountById
-        .handle(client.getId())
+        .handle(customer.getId())
         .flatMap(
             account -> {
               account.credit(amount);
