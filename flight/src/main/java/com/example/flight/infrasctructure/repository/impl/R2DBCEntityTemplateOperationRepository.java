@@ -1,9 +1,10 @@
 package com.example.flight.infrasctructure.repository.impl;
 
+import com.example.flight.domain.model.Ticket;
 import com.example.flight.infrasctructure.repository.OperationRepository;
-import com.example.flight.infrasctructure.repository.reactive.ReactiveOperationRepository;
 import com.example.flight.infrasctructure.repository.table.Operation;
 import com.example.flight.infrasctructure.repository.table.OperationTable;
+import com.example.flight.infrasctructure.repository.table.TicketTable;
 import io.r2dbc.spi.Row;
 import lombok.AllArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -16,7 +17,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class R2DBCEntityTemplateOperationRepository implements OperationRepository {
 
-  private final ReactiveOperationRepository reactiveOperationRepository;
   private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
   @Override
@@ -25,7 +25,7 @@ public class R2DBCEntityTemplateOperationRepository implements OperationReposito
         .getDatabaseClient()
         .sql(
             "SELECT * FROM operations AS operations"
-                + " INNER JOIN accounts AS accounts ON accounts.id = operations.account_id"
+                + " INNER JOIN tickets AS tickets ON tickets.id = operations.ticket_id"
                 + " WHERE operations.id = :operationId")
         .bind("operationId", id)
         .map(row -> row)
@@ -34,9 +34,9 @@ public class R2DBCEntityTemplateOperationRepository implements OperationReposito
   }
 
   @Override
-  public Mono<OperationTable> create(UUID id, Operation operation) {
+  public Mono<OperationTable> create(UUID id, Operation operation, Ticket ticket) {
     return r2dbcEntityTemplate
-        .insert(new OperationTable(id, operation))
+        .insert(new OperationTable(id, operation, new TicketTable(ticket)))
         .map(operationTable -> operationTable);
   }
 
@@ -44,6 +44,10 @@ public class R2DBCEntityTemplateOperationRepository implements OperationReposito
     final var operationTable = new OperationTable();
     operationTable.setId(row.get("id", UUID.class));
     operationTable.setOperation(Operation.valueOf(row.get("operation_name", String.class)));
+
+    final var ticketTable = new TicketTable();
+    //    ticketTable.setId(row.get());
+
     return operationTable;
   }
 }
