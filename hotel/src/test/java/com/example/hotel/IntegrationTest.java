@@ -1,8 +1,5 @@
-package com.example.flight;
+package com.example.hotel;
 
-import com.example.flight.domain.model.TicketsCustomerRelationshipRepository;
-import com.example.flight.infrasctructure.repository.impl.R2DBCEntityTemplateTicketsRepository;
-import com.example.flight.infrasctructure.repository.reactive.ReactiveOperationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.SneakyThrows;
@@ -18,18 +15,11 @@ import reactor.core.publisher.Mono;
 public class IntegrationTest {
 
   protected static final ConfigurableApplicationContext configurableApplicationContext =
-      SpringApplication.run(FlightApplication.class);
+      SpringApplication.run(HotelApplication.class);
   protected static final ConnectionFactory connectionFactory =
       configurableApplicationContext.getBean(ConnectionFactory.class);
   protected static final ObjectMapper objectMapper =
       configurableApplicationContext.getBean(ObjectMapper.class);
-  protected static final R2DBCEntityTemplateTicketsRepository r2dbcEntityTemplateTicketsRepository =
-      configurableApplicationContext.getBean(R2DBCEntityTemplateTicketsRepository.class);
-  protected static final TicketsCustomerRelationshipRepository
-      ticketsCustomerRelationshipRepository =
-          configurableApplicationContext.getBean(TicketsCustomerRelationshipRepository.class);
-  protected static final ReactiveOperationRepository reactiveOperationsRepository =
-      configurableApplicationContext.getBean(ReactiveOperationRepository.class);
   private static final Resource schemaResource = new ClassPathResource("schema.sql");
   private static final Resource clearDBResource = new ClassPathResource("cleardb.sql");
 
