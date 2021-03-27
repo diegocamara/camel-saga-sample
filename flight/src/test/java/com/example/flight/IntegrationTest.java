@@ -13,7 +13,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.r2dbc.connection.init.ScriptUtils;
 import reactor.core.publisher.Mono;
 
@@ -34,8 +33,6 @@ public class IntegrationTest {
           configurableApplicationContext.getBean(TicketsCustomerRelationshipRepository.class);
   protected static final ReactiveOperationRepository reactiveOperationsRepository =
       configurableApplicationContext.getBean(ReactiveOperationRepository.class);
-  protected static final R2dbcEntityTemplate r2dbcEntityTemplate =
-      configurableApplicationContext.getBean(R2dbcEntityTemplate.class);
   private static final Resource schemaResource = new ClassPathResource("schema.sql");
   private static final Resource clearDBResource = new ClassPathResource("cleardb.sql");
 
