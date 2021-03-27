@@ -1,17 +1,13 @@
 package com.example.flight.application.web.controller;
 
+import com.example.flight.application.web.controller.transaction.BuyTicketTransaction;
 import com.example.flight.application.web.model.BuyTicketRequest;
-import com.example.flight.application.web.model.TicketResponse;
-import com.example.flight.domain.feature.BuyTicket;
-import com.example.flight.domain.feature.DeleteTicketById;
-import com.example.flight.domain.feature.FindTicketById;
-import com.example.flight.domain.model.Customer;
-import com.example.flight.infrasctructure.repository.OperationRepository;
-import com.example.flight.infrasctructure.repository.table.Operation;
+import com.example.flight.application.web.model.BuyTicketResponse;
+import com.example.flight.application.web.model.CancelTicketPurchaseRequest;
+import com.example.flight.domain.feature.CancelTicketPurchase;
+import com.example.flight.domain.feature.FindTicketCustomerRelationshipById;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -22,51 +18,30 @@ import java.util.UUID;
 @RequestMapping("/tickets")
 public class TicketsController {
 
-  private final BuyTicket buyTicket;
-  private final FindTicketById findTicketById;
-  private final DeleteTicketById deleteTicketById;
-  private final OperationRepository operationRepository;
+  private final BuyTicketTransaction buyTicketTransaction;
+  private final FindTicketCustomerRelationshipById findTicketCustomerRelationshipById;
+  private final CancelTicketPurchase cancelTicketPurchase;
 
   @PostMapping
-  @Transactional
-  public Mono<ResponseEntity<TicketResponse>> buyTicket(
+  public Mono<ResponseEntity<BuyTicketResponse>> buyTicket(
       @RequestHeader("transaction-reference") UUID transactionReference,
       @RequestBody BuyTicketRequest buyTicketRequest) {
-    return buyTicket
-        .handle(
-            new Customer(buyTicketRequest.getCustomer()),
-            buyTicketRequest.getFrom(),
-            buyTicketRequest.getDestination())
-        .flatMap(
-            ticket ->
-                operationRepository
-                    .create(transactionReference, Operation.BUY_TICKET, ticket)
+    return buyTicketTransaction
+        .execute(buyTicketRequest, transactionReference)
+        .onErrorResume(
+            throwable ->
+                findTicketCustomerRelationshipById
+                    .handle(buyTicketRequest.getTicketId(), buyTicketRequest.getCustomerId())
                     .map(
-                        operation ->
-                            ResponseEntity.status(HttpStatus.CREATED)
-                                .body(new TicketResponse(ticket))));
-
-    //    return operationRepository
-    //        .create(transactionReference, Operation.BUY_TICKET)
-    //        .then(
-    //            buyTicket.handle(
-    //                new Customer(buyTicketRequest.getCustomer()),
-    //                buyTicketRequest.getFrom(),
-    //                buyTicketRequest.getDestination()))
-    //        .map(ticket -> ResponseEntity.status(HttpStatus.CREATED).body(new
-    // TicketResponse(ticket)))
-    //        .onErrorResume(
-    //            throwable ->
-    //                operationRepository
-    //                    .findById(transactionReference)
-    //                    .map(
-    //                        operationTable ->
-    //                            ResponseEntity.ok(new
-    // TicketResponse(operationTable.getTicket()))));
+                        ticketCustomerRelationship ->
+                            ResponseEntity.ok(new BuyTicketResponse(ticketCustomerRelationship))));
   }
 
-  @DeleteMapping("/{customerId}")
-  public Mono<ResponseEntity<?>> cancelTicket(@PathVariable("customerId") UUID customerId) {
-    return deleteTicketById.handle(customerId).then(Mono.just(ResponseEntity.ok().build()));
+  @DeleteMapping
+  public Mono<ResponseEntity<?>> cancelTicketPurchase(
+      @RequestBody CancelTicketPurchaseRequest cancelTicketPurchaseRequest) {
+    return cancelTicketPurchase
+        .handle(cancelTicketPurchaseRequest.toCancelTicketPurchaseInput())
+        .map(unused -> ResponseEntity.ok().build());
   }
 }

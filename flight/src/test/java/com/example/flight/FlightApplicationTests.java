@@ -1,7 +1,11 @@
 package com.example.flight;
 
 import com.example.flight.application.web.model.BuyTicketRequest;
-import com.example.flight.application.web.model.TicketResponse;
+import com.example.flight.application.web.model.BuyTicketResponse;
+import com.example.flight.application.web.model.CancelTicketPurchaseRequest;
+import com.example.flight.domain.model.Customer;
+import com.example.flight.domain.model.Ticket;
+import com.example.flight.domain.model.TicketCustomerRelationship;
 import com.example.flight.infrasctructure.repository.table.Operation;
 import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
@@ -19,12 +23,18 @@ class FlightApplicationTests extends IntegrationTest {
   private final UUID customerId = UUID.randomUUID();
 
   @Test
-  void shouldCreateCustomerTicket() {
+  void shouldCreateTicketCustomerRelationship() {
+
+    final var ticket = new Ticket();
+    ticket.setId(UUID.randomUUID());
+    ticket.setFrom("Location from");
+    ticket.setDestination("Location destination");
+
+    r2dbcEntityTemplateTicketsRepository.save(ticket).block();
 
     final var buyTicketRequest = new BuyTicketRequest();
-    buyTicketRequest.setCustomer(customerId);
-    buyTicketRequest.setFrom("Location from");
-    buyTicketRequest.setDestination("Location destination");
+    buyTicketRequest.setTicketId(ticket.getId());
+    buyTicketRequest.setCustomerId(customerId);
 
     final var transactionReference = UUID.randomUUID().toString();
 
@@ -45,32 +55,41 @@ class FlightApplicationTests extends IntegrationTest {
         .then()
         .statusCode(HttpStatus.CREATED.value())
         .body(
-            "id",
-            CoreMatchers.notNullValue(),
-            "customer",
-            CoreMatchers.is(customerId.toString()),
-            "from",
-            CoreMatchers.is(buyTicketRequest.getFrom()),
-            "destination",
-            CoreMatchers.is(buyTicketRequest.getDestination()));
+            "ticket.id",
+            CoreMatchers.is(ticket.getId().toString()),
+            "ticket.from",
+            CoreMatchers.is(ticket.getFrom()),
+            "ticket.destination",
+            CoreMatchers.is(ticket.getDestination()),
+            "customer.id",
+            CoreMatchers.is(customerId.toString()));
 
-    final var ticketResponse = readValue(buyTicketResponse.body().print(), TicketResponse.class);
+    final var buyTicketResponseModel =
+        readValue(buyTicketResponse.body().print(), BuyTicketResponse.class);
 
-    final var storedTicket = reactiveTicketsRepository.findById(ticketResponse.getId()).block();
+    final var storedTicketCustomerRelationship =
+        ticketsCustomerRelationshipRepository
+            .findById(
+                buyTicketResponseModel.getTicket().getId(),
+                buyTicketResponseModel.getCustomer().getId())
+            .block();
 
-    Assertions.assertNotNull(storedTicket);
-    Assertions.assertEquals(buyTicketRequest.getFrom(), storedTicket.getFrom());
-    Assertions.assertEquals(buyTicketRequest.getDestination(), storedTicket.getDestination());
-    Assertions.assertEquals(customerId, storedTicket.getCustomerId());
+    Assertions.assertNotNull(storedTicketCustomerRelationship);
   }
 
   @Test
   void testBuyTicketIdempotency() {
 
+    final var ticket = new Ticket();
+    ticket.setId(UUID.randomUUID());
+    ticket.setFrom("Location from");
+    ticket.setDestination("Location destination");
+
+    r2dbcEntityTemplateTicketsRepository.save(ticket).block();
+
     final var buyTicketRequest = new BuyTicketRequest();
-    buyTicketRequest.setCustomer(customerId);
-    buyTicketRequest.setFrom("Location from");
-    buyTicketRequest.setDestination("Location destination");
+    buyTicketRequest.setTicketId(ticket.getId());
+    buyTicketRequest.setCustomerId(customerId);
 
     final var transactionReference = UUID.randomUUID().toString();
 
@@ -91,33 +110,81 @@ class FlightApplicationTests extends IntegrationTest {
         .then()
         .statusCode(HttpStatus.CREATED.value())
         .body(
-            "id",
-            CoreMatchers.notNullValue(),
-            "customer",
-            CoreMatchers.is(customerId.toString()),
-            "from",
-            CoreMatchers.is(buyTicketRequest.getFrom()),
-            "destination",
-            CoreMatchers.is(buyTicketRequest.getDestination()));
+            "ticket.id",
+            CoreMatchers.is(ticket.getId().toString()),
+            "ticket.from",
+            CoreMatchers.is(ticket.getFrom()),
+            "ticket.destination",
+            CoreMatchers.is(ticket.getDestination()),
+            "customer.id",
+            CoreMatchers.is(customerId.toString()));
 
-    final var ticketResponse =
-        readValue(firstBuyTicketResponse.body().print(), TicketResponse.class);
+    final var buyTicketResponseModel =
+        readValue(firstBuyTicketResponse.body().print(), BuyTicketResponse.class);
 
-    final var storedTicket = reactiveTicketsRepository.findById(ticketResponse.getId()).block();
+    final var storedTicketCustomerRelationship =
+        ticketsCustomerRelationshipRepository
+            .findById(
+                buyTicketResponseModel.getTicket().getId(),
+                buyTicketResponseModel.getCustomer().getId())
+            .block();
 
-    Assertions.assertNotNull(storedTicket);
-    Assertions.assertEquals(buyTicketRequest.getFrom(), storedTicket.getFrom());
-    Assertions.assertEquals(buyTicketRequest.getDestination(), storedTicket.getDestination());
-    Assertions.assertEquals(customerId, storedTicket.getCustomerId());
+    Assertions.assertNotNull(storedTicketCustomerRelationship);
 
     final var secondBuyTicketResponse = buyTicketsRequestSpecification.post(url);
 
-    secondBuyTicketResponse.then().statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+    secondBuyTicketResponse
+        .then()
+        .statusCode(HttpStatus.OK.value())
+        .body(
+            "ticket.id",
+            CoreMatchers.is(ticket.getId().toString()),
+            "ticket.from",
+            CoreMatchers.is(ticket.getFrom()),
+            "ticket.destination",
+            CoreMatchers.is(ticket.getDestination()),
+            "customer.id",
+            CoreMatchers.is(customerId.toString()));
 
     final var storedOperation =
         reactiveOperationsRepository.findById(UUID.fromString(transactionReference)).block();
 
     Assertions.assertNotNull(storedOperation);
     Assertions.assertEquals(Operation.BUY_TICKET, storedOperation.getOperation());
+  }
+
+  @Test
+  public void shouldCancelTicketPurchase() {
+
+    final var ticket = new Ticket();
+    ticket.setId(UUID.randomUUID());
+    ticket.setFrom("Location from");
+    ticket.setDestination("Location destination");
+
+    r2dbcEntityTemplateTicketsRepository.save(ticket).block();
+
+    final var ticketCustomerRelationship =
+        new TicketCustomerRelationship(ticket, new Customer(customerId));
+
+    ticketsCustomerRelationshipRepository.save(ticketCustomerRelationship).block();
+
+    final var cancelTicketPurchaseRequest = new CancelTicketPurchaseRequest();
+    cancelTicketPurchaseRequest.setTicketId(ticket.getId());
+    cancelTicketPurchaseRequest.setCustomerId(customerId);
+
+    final var cancelTicketPurchaseRequestSpecification =
+        RestAssured.given()
+            .headers(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .body(writeValueAsString(cancelTicketPurchaseRequest));
+
+    final var cancelTicketPurchaseResponse =
+        cancelTicketPurchaseRequestSpecification.delete("/tickets");
+
+    cancelTicketPurchaseResponse.then().statusCode(HttpStatus.OK.value());
+
+    final var storedTicketCustomerRelationship =
+        ticketsCustomerRelationshipRepository.findById(ticket.getId(), customerId).block();
+
+    Assertions.assertNull(storedTicketCustomerRelationship);
   }
 }

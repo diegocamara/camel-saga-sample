@@ -1,5 +1,7 @@
 package com.example.flight;
 
+import com.example.flight.domain.model.TicketsCustomerRelationshipRepository;
+import com.example.flight.infrasctructure.repository.impl.R2DBCEntityTemplateTicketsRepository;
 import com.example.flight.infrasctructure.repository.reactive.ReactiveOperationRepository;
 import com.example.flight.infrasctructure.repository.reactive.ReactiveTicketsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +27,11 @@ public class IntegrationTest {
       configurableApplicationContext.getBean(ObjectMapper.class);
   protected static final ReactiveTicketsRepository reactiveTicketsRepository =
       configurableApplicationContext.getBean(ReactiveTicketsRepository.class);
+  protected static final R2DBCEntityTemplateTicketsRepository r2dbcEntityTemplateTicketsRepository =
+      configurableApplicationContext.getBean(R2DBCEntityTemplateTicketsRepository.class);
+  protected static final TicketsCustomerRelationshipRepository
+      ticketsCustomerRelationshipRepository =
+          configurableApplicationContext.getBean(TicketsCustomerRelationshipRepository.class);
   protected static final ReactiveOperationRepository reactiveOperationsRepository =
       configurableApplicationContext.getBean(ReactiveOperationRepository.class);
   protected static final R2dbcEntityTemplate r2dbcEntityTemplate =

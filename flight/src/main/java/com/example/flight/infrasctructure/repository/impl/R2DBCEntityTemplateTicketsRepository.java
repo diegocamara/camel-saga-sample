@@ -1,6 +1,5 @@
 package com.example.flight.infrasctructure.repository.impl;
 
-import com.example.flight.domain.model.Customer;
 import com.example.flight.domain.model.Ticket;
 import com.example.flight.domain.model.TicketsRepository;
 import com.example.flight.infrasctructure.repository.reactive.ReactiveTicketsRepository;
@@ -31,12 +30,12 @@ public class R2DBCEntityTemplateTicketsRepository implements TicketsRepository {
 
   @Override
   public Mono<Void> delete(Ticket ticket) {
-    return reactiveTicketsRepository.deleteById(ticket.getCustomer().getId());
+    return reactiveTicketsRepository.deleteById(ticket.getId());
   }
 
   private Ticket ticket(TicketTable ticketTable) {
     final var ticket = new Ticket();
-    ticket.setCustomer(new Customer(ticketTable.getId()));
+    ticket.setId(ticketTable.getId());
     ticket.setFrom(ticketTable.getFrom());
     ticket.setDestination(ticketTable.getDestination());
     return ticket;

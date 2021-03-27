@@ -15,9 +15,6 @@ import java.util.UUID;
 public class TicketTable {
   @Id private UUID id;
 
-  @Column("customer_id")
-  private UUID customerId;
-
   @Column("location_from")
   private String from;
 
@@ -26,7 +23,6 @@ public class TicketTable {
 
   public TicketTable(Ticket ticket) {
     this.id = ticket.getId();
-    this.customerId = ticket.getCustomer().getId();
     this.from = ticket.getFrom();
     this.destination = ticket.getDestination();
   }
