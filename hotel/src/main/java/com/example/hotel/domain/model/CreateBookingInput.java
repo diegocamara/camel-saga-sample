@@ -7,7 +7,8 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class Bedroom {
-  private final UUID id;
-  private String description;
+public class CreateBookingInput {
+  private UUID bedroomId;
+  private UUID customerId;
+  private Period period;
 }

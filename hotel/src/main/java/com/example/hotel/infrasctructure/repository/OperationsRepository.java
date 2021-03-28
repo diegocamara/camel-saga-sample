@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface OperationRepository {
+public interface OperationsRepository {
 
   Mono<OperationTable> findById(UUID id);
 

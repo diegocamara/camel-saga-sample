@@ -1,7 +1,6 @@
 package com.example.hotel.infrasctructure.repository.impl;
 
-import com.example.hotel.infrasctructure.repository.OperationRepository;
-import com.example.hotel.infrasctructure.repository.reactive.ReactiveOperationRepository;
+import com.example.hotel.infrasctructure.repository.OperationsRepository;
 import com.example.hotel.infrasctructure.repository.table.Operation;
 import com.example.hotel.infrasctructure.repository.table.OperationTable;
 import io.r2dbc.spi.Row;
@@ -14,9 +13,8 @@ import java.util.UUID;
 
 @Repository
 @AllArgsConstructor
-public class R2DBCEntityTemplateOperationRepository implements OperationRepository {
+public class R2DBCOperationsRepository implements OperationsRepository {
 
-  private final ReactiveOperationRepository reactiveOperationRepository;
   private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
   @Override

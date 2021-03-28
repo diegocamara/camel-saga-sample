@@ -5,4 +5,13 @@ spring:
     url: r2dbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:hoteldb}
     username: ${DATABASE_USERNAME:hotel_service}
     password: ${DATABASE_PASSWORD:hotel_service_123}
+  rabbitmq:
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+
+queue:
+  booking-request: ${BOOKING_REQUEST_QUEUE_NAME:booking_request}
+  booking-response: ${BOOKING_RESPONSE_QUEUE_NAME:booking_response}
 

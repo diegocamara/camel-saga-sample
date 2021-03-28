@@ -2,6 +2,10 @@ spring:
   r2dbc:
     url: r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
 
+queue:
+  booking-request: ${BOOKING_REQUEST_QUEUE_NAME:booking_request}
+  booking-response: ${BOOKING_RESPONSE_QUEUE_NAME:booking_response}
+
 logging:
   level:
     io.r2dbc.h2.client.SessionClient: DEBUG;
