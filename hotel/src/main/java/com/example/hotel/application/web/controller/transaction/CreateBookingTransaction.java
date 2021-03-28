@@ -24,14 +24,14 @@ public class CreateBookingTransaction {
   @Transactional
   public Mono<ResponseEntity<BookingResponse>> execute(
       UUID transactionReference, BookingRequest bookingRequest) {
-    return operationsRepository
-        .create(transactionReference, Operation.BOOKING)
+    return createBooking
+        .handle(bookingRequest.toCreateBookingInput())
         .flatMap(
-            operationTable ->
-                createBooking
-                    .handle(bookingRequest.toCreateBookingInput())
+            booking ->
+                operationsRepository
+                    .create(transactionReference, Operation.BOOKING, booking)
                     .map(
-                        booking ->
+                        operationTable ->
                             ResponseEntity.status(HttpStatus.CREATED)
                                 .body(new BookingResponse(booking))));
   }

@@ -60,6 +60,7 @@ CREATE TABLE operations (
 
 CREATE TABLE bedrooms (
     id UUID NOT NULL,
+    description VARCHAR(255) NOT NULL,
     CONSTRAINT bedrooms_pk PRIMARY KEY (id)
 );
 
@@ -75,9 +76,8 @@ CREATE TABLE booking (
 
 CREATE TABLE operations (
     id UUID NOT NULL,
+    booking_id UUID NOT NULL,
     operation_name VARCHAR(255) NOT NULL,
-    CONSTRAINT operations_pk PRIMARY KEY (id)
+    CONSTRAINT operations_pk PRIMARY KEY (id),
+    CONSTRAINT operations_booking_fk FOREIGN KEY (booking_id) REFERENCES booking (id)
 );
-
-
-

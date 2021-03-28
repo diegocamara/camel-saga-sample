@@ -2,10 +2,9 @@ package com.example.hotel.infrasctructure.repository.impl;
 
 import com.example.hotel.domain.model.Booking;
 import com.example.hotel.domain.model.BookingRepository;
-import com.example.hotel.domain.model.Customer;
 import com.example.hotel.infrasctructure.repository.reactive.ReactiveBookingRepository;
 import com.example.hotel.infrasctructure.repository.table.BookingTable;
-import io.r2dbc.spi.Row;
+import com.example.hotel.infrasctructure.repository.utils.RepositoryUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Repository;
@@ -30,18 +29,23 @@ public class R2DBCBookingRepository implements BookingRepository {
     return r2dbcEntityTemplate
         .getDatabaseClient()
         .sql(
-            "SELECT * FROM booking AS booking"
-                + " INNER JOIN bedrooms as bedrooms ON bedrooms.id = booking.bedroom_id WHERE booking.id = : bookingId")
+            "SELECT booking.id AS booking_id,"
+                + " booking.bedroom_id AS booking_bedroom_id,"
+                + " booking.customer_id AS booking_customer_id,"
+                + " booking.period_from AS booking_period_from,"
+                + " booking.period_to AS booking_period_to,"
+                + " bedrooms.id AS bedroom_id,"
+                + " bedrooms.description AS bedroom_description"
+                + " FROM booking AS booking"
+                + " INNER JOIN bedrooms AS bedrooms ON bedrooms.id = booking.bedroom_id WHERE booking.id = :bookingId")
         .bind("bookingId", id.toString())
         .map(row -> row)
         .first()
-        .map(this::booking);
+        .map(RepositoryUtils::booking);
   }
 
-  private Booking booking(Row row) {
-    final var id = row.get("id", UUID.class);
-    final var customer = new Customer(row.get("customer_id", UUID.class));
-    //    final var period = new Period(bookingTable.getFrom(), bookingTable.getTo());
-    return new Booking(id, customer, null, null);
+  @Override
+  public Mono<Void> delete(Booking booking) {
+    return reactiveBookingRepository.deleteById(booking.getId());
   }
 }

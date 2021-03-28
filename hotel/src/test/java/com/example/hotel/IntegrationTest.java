@@ -1,5 +1,8 @@
 package com.example.hotel;
 
+import com.example.hotel.infrasctructure.repository.impl.R2DBCBedroomsRepository;
+import com.example.hotel.infrasctructure.repository.impl.R2DBCBookingRepository;
+import com.example.hotel.infrasctructure.repository.impl.R2DBCOperationsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.SneakyThrows;
@@ -20,6 +23,12 @@ public class IntegrationTest {
       configurableApplicationContext.getBean(ConnectionFactory.class);
   protected static final ObjectMapper objectMapper =
       configurableApplicationContext.getBean(ObjectMapper.class);
+  protected static final R2DBCBedroomsRepository r2dbcBedroomsRepository =
+      configurableApplicationContext.getBean(R2DBCBedroomsRepository.class);
+  protected static final R2DBCBookingRepository r2dbcBookingRepository =
+      configurableApplicationContext.getBean(R2DBCBookingRepository.class);
+  protected static final R2DBCOperationsRepository r2dbcOperationsRepository =
+      configurableApplicationContext.getBean(R2DBCOperationsRepository.class);
   private static final Resource schemaResource = new ClassPathResource("schema.sql");
   private static final Resource clearDBResource = new ClassPathResource("cleardb.sql");
 
