@@ -1,10 +1,15 @@
+CREATE DATABASE ordersdb;
 CREATE DATABASE paymentsdb;
 CREATE DATABASE flightdb;
 CREATE DATABASE hoteldb;
 
+CREATE USER orders_service;
 CREATE USER payments_service;
 CREATE USER flight_service;
 CREATE USER hotel_service;
+
+ALTER USER orders_service WITH PASSWORD 'orders_service_123';
+GRANT ALL PRIVILEGES ON DATABASE ordersdb TO orders_service;
 
 ALTER USER payments_service WITH PASSWORD 'payments_service_123';
 GRANT ALL PRIVILEGES ON DATABASE paymentsdb TO payments_service;

@@ -1,0 +1,11 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  data:
+    mongodb:
+      database: ${DATABASE_NAME:ordersdb}
+      port: ${DATABASE_PORT:27017}
+      host: ${DATABASE_HOST:localhost}
+
+collections:
+  orders-collection: ${ORDERS_COLLECTION:orders}
