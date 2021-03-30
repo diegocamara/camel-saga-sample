@@ -5,4 +5,8 @@ spring:
     url: r2dbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:flightdb}
     username: ${DATABASE_USERNAME:flight_service}
     password: ${DATABASE_PASSWORD:flight_service_123}
+web:
+  client:
+    payments:
+      base-url: ${PAYMENTS_BASE_URL:http://localhost:8083}
 

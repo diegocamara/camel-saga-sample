@@ -2,7 +2,9 @@ package com.example.flight.application.web.controller.transaction;
 
 import com.example.flight.application.web.model.BuyTicketRequest;
 import com.example.flight.application.web.model.BuyTicketResponse;
+import com.example.flight.domain.feature.AccountDebit;
 import com.example.flight.domain.feature.BuyTicket;
+import com.example.flight.domain.model.AccountDebitInput;
 import com.example.flight.infrasctructure.repository.OperationsRepository;
 import com.example.flight.infrasctructure.repository.table.Operation;
 import lombok.AllArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.UUID;
 public class BuyTicketTransaction {
 
   private final BuyTicket buyTicket;
+  private final AccountDebit accountDebit;
   private final OperationsRepository operationsRepository;
 
   @Transactional
@@ -30,9 +33,18 @@ public class BuyTicketTransaction {
             operationTable ->
                 buyTicket
                     .handle(buyTicketRequest.toBuyTicketInput())
-                    .map(
+                    .flatMap(
                         ticketCustomerRelationship ->
-                            ResponseEntity.status(HttpStatus.CREATED)
-                                .body(new BuyTicketResponse(ticketCustomerRelationship))));
+                            accountDebit
+                                .handle(
+                                    new AccountDebitInput(
+                                        ticketCustomerRelationship.getCustomer().getId(),
+                                        ticketCustomerRelationship.getTicket().getPrice()))
+                                .map(
+                                    account ->
+                                        ResponseEntity.status(HttpStatus.CREATED)
+                                            .body(
+                                                new BuyTicketResponse(
+                                                    ticketCustomerRelationship)))));
   }
 }

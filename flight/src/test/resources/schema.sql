@@ -1,5 +1,6 @@
 CREATE TABLE tickets (
     id UUID NOT NULL,
+    price NUMERIC NOT NULL,
     location_from VARCHAR(255) NOT NULL,
     location_destination VARCHAR(255) NOT NULL,
     CONSTRAINT tickets_pk PRIMARY KEY (id)

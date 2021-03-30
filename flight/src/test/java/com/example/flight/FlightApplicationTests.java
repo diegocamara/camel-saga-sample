@@ -6,15 +6,20 @@ import com.example.flight.application.web.model.CancelTicketPurchaseRequest;
 import com.example.flight.domain.model.Customer;
 import com.example.flight.domain.model.Ticket;
 import com.example.flight.domain.model.TicketCustomerRelationship;
+import com.example.flight.infrasctructure.gateway.model.DebitRequest;
+import com.example.flight.infrasctructure.gateway.model.DebitResponse;
 import com.example.flight.infrasctructure.repository.table.Operation;
 import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 class FlightApplicationTests extends IntegrationTest {
@@ -25,8 +30,11 @@ class FlightApplicationTests extends IntegrationTest {
   @Test
   void shouldCreateTicketCustomerRelationship() {
 
+    mockPaymentsGatewayDebitCall();
+
     final var ticket = new Ticket();
     ticket.setId(UUID.randomUUID());
+    ticket.setPrice(BigDecimal.TEN);
     ticket.setFrom("Location from");
     ticket.setDestination("Location destination");
 
@@ -80,8 +88,11 @@ class FlightApplicationTests extends IntegrationTest {
   @Test
   void testBuyTicketIdempotency() {
 
+    mockPaymentsGatewayDebitCall();
+
     final var ticket = new Ticket();
     ticket.setId(UUID.randomUUID());
+    ticket.setPrice(BigDecimal.TEN);
     ticket.setFrom("Location from");
     ticket.setDestination("Location destination");
 
@@ -158,6 +169,7 @@ class FlightApplicationTests extends IntegrationTest {
 
     final var ticket = new Ticket();
     ticket.setId(UUID.randomUUID());
+    ticket.setPrice(BigDecimal.TEN);
     ticket.setFrom("Location from");
     ticket.setDestination("Location destination");
 
@@ -186,5 +198,29 @@ class FlightApplicationTests extends IntegrationTest {
         ticketsCustomerRelationshipRepository.findById(ticket.getId(), customerId).block();
 
     Assertions.assertNull(storedTicketCustomerRelationship);
+  }
+
+  private void mockPaymentsGatewayDebitCall() {
+    final var debitRequest = new DebitRequest();
+    debitRequest.setAmount(BigDecimal.TEN);
+
+    final var paymentDebitRequest =
+        HttpRequest.request()
+            .withPath("/accounts/" + customerId.toString() + "/debit")
+            .withMethod("PATCH")
+            .withBody(writeValueAsString(debitRequest));
+
+    final var debitResponse = new DebitResponse();
+    debitResponse.setCustomer(customerId);
+    debitResponse.setUsed(BigDecimal.TEN);
+    debitResponse.setTransactionId(UUID.randomUUID());
+
+    final var paymentDebitResponse =
+        HttpResponse.response()
+            .withStatusCode(HttpStatus.OK.value())
+            .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .withBody(writeValueAsString(debitResponse));
+
+    clientAndServer.when(paymentDebitRequest).respond(paymentDebitResponse);
   }
 }

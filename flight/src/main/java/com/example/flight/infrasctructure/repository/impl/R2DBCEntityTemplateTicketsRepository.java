@@ -36,6 +36,7 @@ public class R2DBCEntityTemplateTicketsRepository implements TicketsRepository {
   private Ticket ticket(TicketTable ticketTable) {
     final var ticket = new Ticket();
     ticket.setId(ticketTable.getId());
+    ticket.setPrice(ticketTable.getPrice());
     ticket.setFrom(ticketTable.getFrom());
     ticket.setDestination(ticketTable.getDestination());
     return ticket;

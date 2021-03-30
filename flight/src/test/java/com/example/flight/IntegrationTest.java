@@ -8,6 +8,7 @@ import io.r2dbc.spi.ConnectionFactory;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.mockserver.integration.ClientAndServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
@@ -16,6 +17,21 @@ import org.springframework.r2dbc.connection.init.ScriptUtils;
 import reactor.core.publisher.Mono;
 
 public class IntegrationTest {
+
+  protected static final ClientAndServer clientAndServer = ClientAndServer.startClientAndServer();
+
+  public static final String PAYMENTS_BASE_URL = "PAYMENTS_BASE_URL";
+
+  static {
+    System.setProperty(PAYMENTS_BASE_URL, "http://localhost:" + clientAndServer.getLocalPort());
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  System.clearProperty(PAYMENTS_BASE_URL);
+                  clientAndServer.stop();
+                }));
+  }
 
   protected static final ConfigurableApplicationContext configurableApplicationContext =
       SpringApplication.run(FlightApplication.class);

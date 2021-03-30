@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -14,6 +15,9 @@ import java.util.UUID;
 @NoArgsConstructor
 public class TicketTable {
   @Id private UUID id;
+
+  @Column("price")
+  private BigDecimal price;
 
   @Column("location_from")
   private String from;
@@ -23,6 +27,7 @@ public class TicketTable {
 
   public TicketTable(Ticket ticket) {
     this.id = ticket.getId();
+    this.price = ticket.getPrice();
     this.from = ticket.getFrom();
     this.destination = ticket.getDestination();
   }
