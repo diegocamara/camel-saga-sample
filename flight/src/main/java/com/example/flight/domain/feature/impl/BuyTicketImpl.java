@@ -1,5 +1,6 @@
 package com.example.flight.domain.feature.impl;
 
+import com.example.flight.domain.feature.AccountDebit;
 import com.example.flight.domain.feature.BuyTicket;
 import com.example.flight.domain.feature.FindTicketById;
 import com.example.flight.domain.model.*;
@@ -13,6 +14,7 @@ import javax.inject.Named;
 public class BuyTicketImpl implements BuyTicket {
 
   private final FindTicketById findTicketById;
+  private final AccountDebit accountDebit;
   private final TicketsCustomerRelationshipRepository ticketsCustomerRelationshipRepository;
 
   @Override
@@ -25,6 +27,11 @@ public class BuyTicketImpl implements BuyTicket {
                   ticketCustomerRelationship(buyTicketInput, ticket);
               return ticketsCustomerRelationshipRepository
                   .save(ticketCustomerRelationship)
+                  .then(
+                      accountDebit.handle(
+                          new AccountDebitInput(
+                              ticketCustomerRelationship.getCustomer().getId(),
+                              ticketCustomerRelationship.getTicket().getPrice())))
                   .thenReturn(ticketCustomerRelationship);
             });
   }

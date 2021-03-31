@@ -3,11 +3,10 @@ package com.example.flight.domain.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.UUID;
+import java.math.BigDecimal;
 
 @Data
 @AllArgsConstructor
-public class Account {
-  private final UUID id;
-  private final Details details;
+public class Details {
+  private BigDecimal used;
 }

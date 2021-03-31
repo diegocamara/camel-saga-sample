@@ -1,7 +1,10 @@
 spring:
   r2dbc:
     url: r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-
+web:
+  client:
+    payments:
+      base-url: ${PAYMENTS_BASE_URL:http://localhost:8083}
 queue:
   booking-request: ${BOOKING_REQUEST_QUEUE_NAME:booking_request}
   booking-response: ${BOOKING_RESPONSE_QUEUE_NAME:booking_response}

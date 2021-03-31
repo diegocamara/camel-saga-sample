@@ -10,6 +10,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Repository
@@ -65,6 +66,7 @@ public class R2DBCEntityTemplateTicketsCustomerRelationshipRepository
   private TicketCustomerRelationship ticketCustomerRelationship(Row row) {
     final var ticket = new Ticket();
     ticket.setId(row.get("id", UUID.class));
+    ticket.setPrice(row.get("price", BigDecimal.class));
     ticket.setFrom(row.get("location_from", String.class));
     ticket.setDestination(row.get("location_destination", String.class));
     final var customer = new Customer(row.get("customer_id", UUID.class));

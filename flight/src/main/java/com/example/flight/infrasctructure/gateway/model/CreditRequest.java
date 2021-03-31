@@ -7,6 +7,6 @@ import java.math.BigDecimal;
 
 @Data
 @AllArgsConstructor
-public class DebitRequest {
+public class CreditRequest {
   private BigDecimal amount;
 }

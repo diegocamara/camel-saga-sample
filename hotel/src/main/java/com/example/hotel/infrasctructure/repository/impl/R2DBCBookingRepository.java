@@ -35,7 +35,8 @@ public class R2DBCBookingRepository implements BookingRepository {
                 + " booking.period_from AS booking_period_from,"
                 + " booking.period_to AS booking_period_to,"
                 + " bedrooms.id AS bedroom_id,"
-                + " bedrooms.description AS bedroom_description"
+                + " bedrooms.description AS bedroom_description,"
+                + " bedrooms.price AS bedroom_price"
                 + " FROM booking AS booking"
                 + " INNER JOIN bedrooms AS bedrooms ON bedrooms.id = booking.bedroom_id WHERE booking.id = :bookingId")
         .bind("bookingId", id.toString())

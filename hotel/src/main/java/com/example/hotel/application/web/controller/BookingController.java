@@ -1,10 +1,9 @@
 package com.example.hotel.application.web.controller;
 
+import com.example.hotel.application.web.controller.transaction.CancelBookingTransaction;
 import com.example.hotel.application.web.controller.transaction.CreateBookingTransaction;
 import com.example.hotel.application.web.model.BookingRequest;
 import com.example.hotel.application.web.model.BookingResponse;
-import com.example.hotel.domain.feature.CancelBookingById;
-import com.example.hotel.domain.model.CancelBookingInput;
 import com.example.hotel.infrasctructure.repository.OperationsRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,7 @@ import java.util.UUID;
 public class BookingController {
 
   private final CreateBookingTransaction createBookingTransaction;
-  private final CancelBookingById cancelBookingById;
+  private final CancelBookingTransaction cancelBookingTransaction;
   private final OperationsRepository operationsRepository;
 
   @PostMapping
@@ -37,8 +36,6 @@ public class BookingController {
 
   @DeleteMapping("/{bookingId}")
   public Mono<ResponseEntity<?>> cancelBooking(@PathVariable("bookingId") UUID bookingId) {
-    return cancelBookingById
-        .handle(new CancelBookingInput(bookingId))
-        .map(unused -> ResponseEntity.ok().build());
+    return cancelBookingTransaction.execute(bookingId);
   }
 }

@@ -4,6 +4,10 @@ import com.example.hotel.infrasctructure.repository.impl.R2DBCBedroomsRepository
 import com.example.hotel.infrasctructure.repository.impl.R2DBCBookingRepository;
 import com.example.hotel.infrasctructure.repository.impl.R2DBCOperationsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +20,25 @@ import org.springframework.r2dbc.connection.init.ScriptUtils;
 import reactor.core.publisher.Mono;
 
 public class IntegrationTest {
+
+  protected static final WireMockServer wireMockServer =
+      new WireMockServer(
+          WireMockConfiguration.options().dynamicPort().notifier(new ConsoleNotifier(true)));
+
+  public static final String PAYMENTS_BASE_URL = "PAYMENTS_BASE_URL";
+
+  static {
+    wireMockServer.start();
+    WireMock.configureFor(wireMockServer.port());
+    System.setProperty(PAYMENTS_BASE_URL, wireMockServer.baseUrl());
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  System.clearProperty(PAYMENTS_BASE_URL);
+                  wireMockServer.stop();
+                }));
+  }
 
   protected static final ConfigurableApplicationContext configurableApplicationContext =
       SpringApplication.run(HotelApplication.class);

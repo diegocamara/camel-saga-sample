@@ -6,6 +6,7 @@ import com.example.hotel.domain.model.Customer;
 import com.example.hotel.domain.model.Period;
 import io.r2dbc.spi.Row;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -20,7 +21,9 @@ public class RepositoryUtils {
             row.get("booking_period_to", LocalDateTime.class));
     final var bedroom =
         new Bedroom(
-            row.get("bedroom_id", UUID.class), row.get("bedroom_description", String.class));
+            row.get("bedroom_id", UUID.class),
+            row.get("bedroom_description", String.class),
+            row.get("bedroom_price", BigDecimal.class));
     return new Booking(id, customer, bedroom, period);
   }
 }

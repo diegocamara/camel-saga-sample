@@ -1,6 +1,7 @@
 CREATE TABLE bedrooms (
     id UUID NOT NULL,
     description VARCHAR(255) NOT NULL,
+    price NUMERIC NOT NULL,
     CONSTRAINT bedrooms_pk PRIMARY KEY (id)
 );
 

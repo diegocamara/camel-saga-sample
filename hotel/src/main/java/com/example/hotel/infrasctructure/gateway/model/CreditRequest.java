@@ -1,4 +1,4 @@
-package com.example.flight.infrasctructure.gateway.model;
+package com.example.hotel.infrasctructure.gateway.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +7,6 @@ import java.math.BigDecimal;
 
 @Data
 @AllArgsConstructor
-public class DebitRequest {
+public class CreditRequest {
   private BigDecimal amount;
 }

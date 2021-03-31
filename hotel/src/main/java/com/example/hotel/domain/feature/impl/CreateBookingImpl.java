@@ -1,5 +1,6 @@
 package com.example.hotel.domain.feature.impl;
 
+import com.example.hotel.domain.feature.AccountDebit;
 import com.example.hotel.domain.feature.CreateBooking;
 import com.example.hotel.domain.model.*;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CreateBookingImpl implements CreateBooking {
 
+  private final AccountDebit accountDebit;
   private final BedroomsRepository bedroomsRepository;
   private final BookingRepository bookingRepository;
 
@@ -22,7 +24,17 @@ public class CreateBookingImpl implements CreateBooking {
         .flatMap(
             bedroom ->
                 createBooking(bedroom, createBookingInput)
-                    .flatMap(booking -> bookingRepository.save(booking).thenReturn(booking)));
+                    .flatMap(
+                        booking ->
+                            bookingRepository
+                                .save(booking)
+                                .then(
+                                    accountDebit
+                                        .handle(
+                                            new AccountDebitInput(
+                                                createBookingInput.getCustomerId(),
+                                                bedroom.getPrice()))
+                                        .thenReturn(booking))));
   }
 
   private Mono<Booking> createBooking(Bedroom bedroom, CreateBookingInput createBookingInput) {

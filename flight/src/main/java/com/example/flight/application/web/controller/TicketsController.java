@@ -1,10 +1,10 @@
 package com.example.flight.application.web.controller;
 
 import com.example.flight.application.web.controller.transaction.BuyTicketTransaction;
+import com.example.flight.application.web.controller.transaction.CancelTicketPurchaseTransaction;
 import com.example.flight.application.web.model.BuyTicketRequest;
 import com.example.flight.application.web.model.BuyTicketResponse;
 import com.example.flight.application.web.model.CancelTicketPurchaseRequest;
-import com.example.flight.domain.feature.CancelTicketPurchase;
 import com.example.flight.domain.feature.FindTicketCustomerRelationshipById;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +19,8 @@ import java.util.UUID;
 public class TicketsController {
 
   private final BuyTicketTransaction buyTicketTransaction;
+  private final CancelTicketPurchaseTransaction cancelTicketPurchaseTransaction;
   private final FindTicketCustomerRelationshipById findTicketCustomerRelationshipById;
-  private final CancelTicketPurchase cancelTicketPurchase;
 
   @PostMapping
   public Mono<ResponseEntity<BuyTicketResponse>> buyTicket(
@@ -40,8 +40,6 @@ public class TicketsController {
   @DeleteMapping
   public Mono<ResponseEntity<?>> cancelTicketPurchase(
       @RequestBody CancelTicketPurchaseRequest cancelTicketPurchaseRequest) {
-    return cancelTicketPurchase
-        .handle(cancelTicketPurchaseRequest.toCancelTicketPurchaseInput())
-        .map(unused -> ResponseEntity.ok().build());
+    return cancelTicketPurchaseTransaction.execute(cancelTicketPurchaseRequest);
   }
 }

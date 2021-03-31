@@ -6,6 +6,8 @@ import com.example.flight.application.web.model.CancelTicketPurchaseRequest;
 import com.example.flight.domain.model.Customer;
 import com.example.flight.domain.model.Ticket;
 import com.example.flight.domain.model.TicketCustomerRelationship;
+import com.example.flight.infrasctructure.gateway.model.CreditRequest;
+import com.example.flight.infrasctructure.gateway.model.CreditResponse;
 import com.example.flight.infrasctructure.gateway.model.DebitRequest;
 import com.example.flight.infrasctructure.gateway.model.DebitResponse;
 import com.example.flight.infrasctructure.repository.table.Operation;
@@ -167,6 +169,8 @@ class FlightApplicationTests extends IntegrationTest {
   @Test
   public void shouldCancelTicketPurchase() {
 
+    mockPaymentsGatewayCreditCall();
+
     final var ticket = new Ticket();
     ticket.setId(UUID.randomUUID());
     ticket.setPrice(BigDecimal.TEN);
@@ -202,8 +206,7 @@ class FlightApplicationTests extends IntegrationTest {
 
   private void mockPaymentsGatewayDebitCall() {
 
-    final var debitRequest = new DebitRequest();
-    debitRequest.setAmount(BigDecimal.TEN);
+    final var debitRequest = new DebitRequest(BigDecimal.TEN);
 
     final var debitResponse = new DebitResponse();
     debitResponse.setCustomer(customerId);
@@ -218,5 +221,25 @@ class FlightApplicationTests extends IntegrationTest {
                     .withStatus(HttpStatus.OK.value())
                     .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .withBody(writeValueAsString(debitResponse))));
+  }
+
+  private void mockPaymentsGatewayCreditCall() {
+
+    final var creditRequest = new CreditRequest(BigDecimal.TEN);
+    creditRequest.setAmount(BigDecimal.TEN);
+
+    final var creditResponse = new CreditResponse();
+    creditResponse.setCustomer(customerId);
+    creditResponse.setUsed(BigDecimal.TEN);
+    creditResponse.setTransactionId(UUID.randomUUID());
+
+    stubFor(
+        patch(urlEqualTo("/accounts/" + customerId.toString() + "/credit"))
+            .withRequestBody(equalToJson(writeValueAsString(creditRequest)))
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatus.OK.value())
+                    .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .withBody(writeValueAsString(creditResponse))));
   }
 }

@@ -6,6 +6,10 @@ import com.example.hotel.domain.model.Bedroom;
 import com.example.hotel.domain.model.Booking;
 import com.example.hotel.domain.model.Customer;
 import com.example.hotel.domain.model.Period;
+import com.example.hotel.infrasctructure.gateway.model.CreditRequest;
+import com.example.hotel.infrasctructure.gateway.model.CreditResponse;
+import com.example.hotel.infrasctructure.gateway.model.DebitRequest;
+import com.example.hotel.infrasctructure.gateway.model.DebitResponse;
 import com.example.hotel.infrasctructure.repository.table.Operation;
 import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
@@ -15,8 +19,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 class HotelApplicationTests extends IntegrationTest {
 
@@ -26,7 +33,9 @@ class HotelApplicationTests extends IntegrationTest {
   @Test
   void shouldCreateBooking() {
 
-    final var bedroom = new Bedroom(UUID.randomUUID(), "001");
+    mockPaymentsGatewayDebitCall();
+
+    final var bedroom = new Bedroom(UUID.randomUUID(), "001", BigDecimal.TEN);
 
     r2dbcBedroomsRepository.save(bedroom).block();
 
@@ -72,7 +81,9 @@ class HotelApplicationTests extends IntegrationTest {
   @Test
   void testingCreateBookingEndpointIdempotency() {
 
-    final var bedroom = new Bedroom(UUID.randomUUID(), "001");
+    mockPaymentsGatewayDebitCall();
+
+    final var bedroom = new Bedroom(UUID.randomUUID(), "001", BigDecimal.TEN);
 
     r2dbcBedroomsRepository.save(bedroom).block();
 
@@ -134,7 +145,9 @@ class HotelApplicationTests extends IntegrationTest {
   @Test
   public void shouldCancelBooking() {
 
-    final var bedroom = new Bedroom(UUID.randomUUID(), "001");
+    mockPaymentsGatewayCreditCall();
+
+    final var bedroom = new Bedroom(UUID.randomUUID(), "001", BigDecimal.TEN);
 
     r2dbcBedroomsRepository.save(bedroom).block();
 
@@ -154,5 +167,45 @@ class HotelApplicationTests extends IntegrationTest {
     final var storedBooking = r2dbcBookingRepository.findBookingById(booking.getId()).block();
 
     Assertions.assertNull(storedBooking);
+  }
+
+  private void mockPaymentsGatewayDebitCall() {
+
+    final var debitRequest = new DebitRequest();
+    debitRequest.setAmount(BigDecimal.TEN);
+
+    final var debitResponse = new DebitResponse();
+    debitResponse.setCustomer(customerId);
+    debitResponse.setUsed(BigDecimal.TEN);
+    debitResponse.setTransactionId(UUID.randomUUID());
+
+    stubFor(
+        patch(urlEqualTo("/accounts/" + customerId.toString() + "/debit"))
+            .withRequestBody(equalToJson(writeValueAsString(debitRequest)))
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatus.OK.value())
+                    .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .withBody(writeValueAsString(debitResponse))));
+  }
+
+  private void mockPaymentsGatewayCreditCall() {
+
+    final var creditRequest = new CreditRequest(BigDecimal.TEN);
+    creditRequest.setAmount(BigDecimal.TEN);
+
+    final var creditResponse = new CreditResponse();
+    creditResponse.setCustomer(customerId);
+    creditResponse.setUsed(BigDecimal.TEN);
+    creditResponse.setTransactionId(UUID.randomUUID());
+
+    stubFor(
+        patch(urlEqualTo("/accounts/" + customerId.toString() + "/credit"))
+            .withRequestBody(equalToJson(writeValueAsString(creditRequest)))
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatus.OK.value())
+                    .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .withBody(writeValueAsString(creditResponse))));
   }
 }

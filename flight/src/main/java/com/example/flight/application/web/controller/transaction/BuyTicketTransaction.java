@@ -2,26 +2,23 @@ package com.example.flight.application.web.controller.transaction;
 
 import com.example.flight.application.web.model.BuyTicketRequest;
 import com.example.flight.application.web.model.BuyTicketResponse;
-import com.example.flight.domain.feature.AccountDebit;
 import com.example.flight.domain.feature.BuyTicket;
-import com.example.flight.domain.model.AccountDebitInput;
 import com.example.flight.infrasctructure.repository.OperationsRepository;
 import com.example.flight.infrasctructure.repository.table.Operation;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-@Component
+@Service
 @AllArgsConstructor
 public class BuyTicketTransaction {
 
   private final BuyTicket buyTicket;
-  private final AccountDebit accountDebit;
   private final OperationsRepository operationsRepository;
 
   @Transactional
@@ -33,18 +30,9 @@ public class BuyTicketTransaction {
             operationTable ->
                 buyTicket
                     .handle(buyTicketRequest.toBuyTicketInput())
-                    .flatMap(
+                    .map(
                         ticketCustomerRelationship ->
-                            accountDebit
-                                .handle(
-                                    new AccountDebitInput(
-                                        ticketCustomerRelationship.getCustomer().getId(),
-                                        ticketCustomerRelationship.getTicket().getPrice()))
-                                .map(
-                                    account ->
-                                        ResponseEntity.status(HttpStatus.CREATED)
-                                            .body(
-                                                new BuyTicketResponse(
-                                                    ticketCustomerRelationship)))));
+                            ResponseEntity.status(HttpStatus.CREATED)
+                                .body(new BuyTicketResponse(ticketCustomerRelationship))));
   }
 }

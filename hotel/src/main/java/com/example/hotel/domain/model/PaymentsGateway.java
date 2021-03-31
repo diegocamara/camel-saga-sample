@@ -1,4 +1,4 @@
-package com.example.flight.domain.model;
+package com.example.hotel.domain.model;
 
 import reactor.core.publisher.Mono;
 

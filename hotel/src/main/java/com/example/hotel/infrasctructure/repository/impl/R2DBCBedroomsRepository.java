@@ -29,6 +29,7 @@ public class R2DBCBedroomsRepository implements BedroomsRepository {
   }
 
   private Bedroom bedroom(BedroomTable bedroomTable) {
-    return new Bedroom(bedroomTable.getId(), bedroomTable.getDescription());
+    return new Bedroom(
+        bedroomTable.getId(), bedroomTable.getDescription(), bedroomTable.getPrice());
   }
 }
