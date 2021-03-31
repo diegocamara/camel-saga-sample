@@ -13,14 +13,14 @@ import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 class FlightApplicationTests extends IntegrationTest {
 
@@ -201,26 +201,22 @@ class FlightApplicationTests extends IntegrationTest {
   }
 
   private void mockPaymentsGatewayDebitCall() {
+
     final var debitRequest = new DebitRequest();
     debitRequest.setAmount(BigDecimal.TEN);
-
-    final var paymentDebitRequest =
-        HttpRequest.request()
-            .withPath("/accounts/" + customerId.toString() + "/debit")
-            .withMethod("PATCH")
-            .withBody(writeValueAsString(debitRequest));
 
     final var debitResponse = new DebitResponse();
     debitResponse.setCustomer(customerId);
     debitResponse.setUsed(BigDecimal.TEN);
     debitResponse.setTransactionId(UUID.randomUUID());
 
-    final var paymentDebitResponse =
-        HttpResponse.response()
-            .withStatusCode(HttpStatus.OK.value())
-            .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .withBody(writeValueAsString(debitResponse));
-
-    clientAndServer.when(paymentDebitRequest).respond(paymentDebitResponse);
+    stubFor(
+        patch(urlEqualTo("/accounts/" + customerId.toString() + "/debit"))
+            .withRequestBody(equalToJson(writeValueAsString(debitRequest)))
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatus.OK.value())
+                    .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .withBody(writeValueAsString(debitResponse))));
   }
 }

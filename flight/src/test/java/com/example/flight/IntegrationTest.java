@@ -4,11 +4,14 @@ import com.example.flight.domain.model.TicketsCustomerRelationshipRepository;
 import com.example.flight.infrasctructure.repository.impl.R2DBCEntityTemplateTicketsRepository;
 import com.example.flight.infrasctructure.repository.reactive.ReactiveOperationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.mockserver.integration.ClientAndServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
@@ -18,18 +21,22 @@ import reactor.core.publisher.Mono;
 
 public class IntegrationTest {
 
-  protected static final ClientAndServer clientAndServer = ClientAndServer.startClientAndServer();
+  protected static final WireMockServer wireMockServer =
+      new WireMockServer(
+          WireMockConfiguration.options().dynamicPort().notifier(new ConsoleNotifier(true)));
 
   public static final String PAYMENTS_BASE_URL = "PAYMENTS_BASE_URL";
 
   static {
-    System.setProperty(PAYMENTS_BASE_URL, "http://localhost:" + clientAndServer.getLocalPort());
+    wireMockServer.start();
+    WireMock.configureFor(wireMockServer.port());
+    System.setProperty(PAYMENTS_BASE_URL, wireMockServer.baseUrl());
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
                 () -> {
                   System.clearProperty(PAYMENTS_BASE_URL);
-                  clientAndServer.stop();
+                  wireMockServer.stop();
                 }));
   }
 
@@ -56,6 +63,7 @@ public class IntegrationTest {
 
   @AfterEach
   public void afterEach() {
+    wireMockServer.resetAll();
     clearDB();
   }
 

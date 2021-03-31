@@ -1,13 +1,9 @@
 package com.example.orders;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class OrdersApplicationTests {
+class OrdersApplicationTests extends IntegrationTest {
 
-	@Test
-	void contextLoads() {
-	}
-
+  @Test
+  void contextLoads() {}
 }
