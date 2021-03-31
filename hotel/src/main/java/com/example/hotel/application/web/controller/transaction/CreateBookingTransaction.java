@@ -2,7 +2,6 @@ package com.example.hotel.application.web.controller.transaction;
 
 import com.example.hotel.application.web.model.BookingRequest;
 import com.example.hotel.application.web.model.BookingResponse;
-import com.example.hotel.domain.feature.AccountDebit;
 import com.example.hotel.domain.feature.CreateBooking;
 import com.example.hotel.infrasctructure.repository.OperationsRepository;
 import com.example.hotel.infrasctructure.repository.table.Operation;
@@ -20,13 +19,11 @@ import java.util.UUID;
 public class CreateBookingTransaction {
 
   private final CreateBooking createBooking;
-  private final AccountDebit accountDebit;
   private final OperationsRepository operationsRepository;
 
   @Transactional
   public Mono<ResponseEntity<BookingResponse>> execute(
       UUID transactionReference, BookingRequest bookingRequest) {
-
     return createBooking
         .handle(bookingRequest.toCreateBookingInput())
         .flatMap(
