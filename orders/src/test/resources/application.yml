@@ -4,6 +4,11 @@ spring:
   data:
     mongodb:
       database: ${DATABASE_NAME:ordersdb}
+      host: ${DATABASE_HOST:localhost}
+      port: ${DATABASE_PORT:27017}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration
 
 collections:
   orders-collection: ${ORDERS_COLLECTION:orders}

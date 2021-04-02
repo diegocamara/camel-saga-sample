@@ -4,8 +4,8 @@ spring:
   data:
     mongodb:
       database: ${DATABASE_NAME:ordersdb}
-      port: ${DATABASE_PORT:27017}
       host: ${DATABASE_HOST:localhost}
+      port: ${DATABASE_PORT:27017}
 
 collections:
   orders-collection: ${ORDERS_COLLECTION:orders}
