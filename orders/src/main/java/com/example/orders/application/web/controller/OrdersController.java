@@ -26,6 +26,6 @@ public class OrdersController {
         UriComponentsBuilder.fromUriString("/orders/{orderId}")
             .buildAndExpand(order.getId().toString())
             .toUri();
-    return ResponseEntity.created(uri).build();
+    return ResponseEntity.created(uri).body(new OrderResponse(order));
   }
 }

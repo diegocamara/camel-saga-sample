@@ -1,10 +1,9 @@
 package com.example.orders.infrastructure.web.client.impl;
 
 import com.example.orders.infrastructure.configuration.properties.WebClientProperties;
-import com.example.orders.infrastructure.web.client.FlightWebClient;
-import com.example.orders.infrastructure.web.model.BuyTicketRequest;
-import com.example.orders.infrastructure.web.model.BuyTicketResponse;
-import com.example.orders.infrastructure.web.model.CancelTicketPurchaseRequest;
+import com.example.orders.infrastructure.web.client.HotelWebClient;
+import com.example.orders.infrastructure.web.model.BookingRequest;
+import com.example.orders.infrastructure.web.model.BookingResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -19,7 +18,7 @@ import java.util.UUID;
 
 @Component
 @AllArgsConstructor
-public class OkHttpFlightWebClient implements FlightWebClient {
+public class OkHttpHotelWebClient implements HotelWebClient {
 
   private final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
@@ -29,18 +28,18 @@ public class OkHttpFlightWebClient implements FlightWebClient {
 
   @Override
   @SneakyThrows
-  public BuyTicketResponse buyTicket(BuyTicketRequest buyTicketRequest, UUID transactionId) {
-    final var flightProperties = webClientProperties.getFlight();
-    final var url = flightProperties.getBaseUrl() + "/tickets";
+  public BookingResponse createBooking(BookingRequest bookingRequest) {
+    final var hotelProperties = webClientProperties.getHotel();
+    final var url = hotelProperties.getBaseUrl() + "/booking";
     final var requestBody =
-        RequestBody.create(objectMapper.writeValueAsString(buyTicketRequest), JSON);
+        RequestBody.create(objectMapper.writeValueAsString(bookingRequest), JSON);
     final var request = new Request.Builder().url(url).post(requestBody).build();
     try (final var response = okHttpClient.newCall(request).execute()) {
       return objectMapper.readValue(
-          Objects.requireNonNull(response.body()).bytes(), BuyTicketResponse.class);
+          Objects.requireNonNull(response.body()).bytes(), BookingResponse.class);
     }
   }
 
   @Override
-  public void cancelTicket(CancelTicketPurchaseRequest cancelTicketPurchaseRequest) {}
+  public void cancelBooking(UUID bookingId) {}
 }
