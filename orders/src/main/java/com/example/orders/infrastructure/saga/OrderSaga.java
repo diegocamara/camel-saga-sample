@@ -2,14 +2,13 @@ package com.example.orders.infrastructure.saga;
 
 import com.example.orders.domain.model.Item;
 import com.example.orders.domain.model.Order;
+import com.example.orders.infrastructure.repository.springdata.document.BookingResponseDocument;
+import com.example.orders.infrastructure.repository.springdata.document.BuyTicketResponseDocument;
 import com.example.orders.infrastructure.repository.springdata.document.OrderDocument;
 import com.example.orders.infrastructure.repository.springdata.repository.SpringDataOrdersRepository;
 import com.example.orders.infrastructure.web.client.FlightWebClient;
 import com.example.orders.infrastructure.web.client.HotelWebClient;
-import com.example.orders.infrastructure.web.model.BookingRequest;
-import com.example.orders.infrastructure.web.model.BuyTicketRequest;
-import com.example.orders.infrastructure.web.model.BuyTicketResponse;
-import com.example.orders.infrastructure.web.model.CancelTicketPurchaseRequest;
+import com.example.orders.infrastructure.web.model.*;
 import lombok.AllArgsConstructor;
 import org.apache.camel.Predicate;
 import org.apache.camel.builder.RouteBuilder;
@@ -47,13 +46,11 @@ public class OrderSaga extends RouteBuilder {
     final var CANCEL_FLIGHT_TICKET_ENDPOINT = DIRECT_PREFIX + CANCEL_FLIGHT_TICKET_ROUTE_ID;
     final var BOOKING_HOTEL_ENDPOINT = DIRECT_PREFIX + BOOKING_HOTEL_ROUTE_ID;
     final var CANCEL_BOOKING_HOTEL_ENDPOINT = DIRECT_PREFIX + CANCEL_BOOKING_HOTEL_ROUTE_ID;
-    final var COMPLETE_ORDER_ENDPOINT = DIRECT_PREFIX + COMPLETE_ORDER_ROUTE_ID;
 
     from(CREATE_ORDER_ENDPOINT)
         .id(CREATE_ORDER_ROUTE_ID)
         .saga()
         .option("order", body())
-        .completion(COMPLETE_ORDER_ENDPOINT)
         .timeout(Duration.ofMinutes(1))
         .setProperty("order", body())
         .choice()
@@ -69,13 +66,15 @@ public class OrderSaga extends RouteBuilder {
         .id(BUY_FLIGHT_TICKET_ROUTE_ID)
         .saga()
         .propagation(SagaPropagation.MANDATORY)
+        .setProperty("order", body())
         .option("order", body())
         .compensation(CANCEL_FLIGHT_TICKET_ENDPOINT)
         .bean(this, "buyTicketRequest")
         .bean(flightWebClient, "buyTicket(${body}, ${header.transactionId})")
-        .option("buyTicketResponse", body());
+        .bean(this, "updateOrderForBuyTicket(${exchangeProperty.order}, ${body})");
 
     from(CANCEL_FLIGHT_TICKET_ENDPOINT)
+        .id(CANCEL_FLIGHT_TICKET_ROUTE_ID)
         .transform(header("buyTicketResponse"))
         .bean(this, "cancelTicketPurchaseRequest")
         .bean(flightWebClient, "cancelTicket");
@@ -84,25 +83,16 @@ public class OrderSaga extends RouteBuilder {
         .id(BOOKING_HOTEL_ROUTE_ID)
         .saga()
         .propagation(SagaPropagation.MANDATORY)
+        .setProperty("order", body())
         .compensation(CANCEL_BOOKING_HOTEL_ENDPOINT)
         .bean(this, "bookingRequest")
         .bean(hotelWebClient, "createBooking(${body})")
-        .option("bookingResponse", body());
+        .bean(this, "updateOrderForBooking(${exchangeProperty.order}, ${body})");
 
     from(CANCEL_BOOKING_HOTEL_ENDPOINT)
+        .id(CANCEL_BOOKING_HOTEL_ROUTE_ID)
         .transform(simple("${header.bookingResponse.id}"))
         .bean(hotelWebClient, "cancelBooking");
-
-    from(COMPLETE_ORDER_ENDPOINT)
-        .id(COMPLETE_ORDER_ROUTE_ID)
-        .transform(header("order"))
-        .bean(this, "orderDocument")
-        .bean(this, "saveOrderDocument");
-  }
-
-  protected void saveOrderDocument(OrderDocument orderDocument) {
-    springDataOrdersRepository.save(orderDocument);
-    orderDocument.getCustomer();
   }
 
   protected BuyTicketRequest buyTicketRequest(Order order) {
@@ -128,6 +118,27 @@ public class OrderSaga extends RouteBuilder {
 
   protected OrderDocument orderDocument(Order order) {
     return new OrderDocument(order);
+  }
+
+  protected void updateOrderForBuyTicket(Order order, BuyTicketResponse buyTicketResponse) {
+    final var storedOrderOptional = springDataOrdersRepository.findById(order.getId());
+    storedOrderOptional.ifPresent(
+        orderDocument -> {
+          orderDocument
+              .getTimeline()
+              .getEvents()
+              .add(new BuyTicketResponseDocument(buyTicketResponse));
+          springDataOrdersRepository.save(orderDocument);
+        });
+  }
+
+  protected void updateOrderForBooking(Order order, BookingResponse bookingResponse) {
+    final var storedOrderOptional = springDataOrdersRepository.findById(order.getId());
+    storedOrderOptional.ifPresent(
+        orderDocument -> {
+          orderDocument.getTimeline().getEvents().add(new BookingResponseDocument(bookingResponse));
+          springDataOrdersRepository.save(orderDocument);
+        });
   }
 
   private Predicate containsItem(Item item) {

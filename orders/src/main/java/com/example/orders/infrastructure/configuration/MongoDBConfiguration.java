@@ -2,6 +2,7 @@ package com.example.orders.infrastructure.configuration;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
 import lombok.AllArgsConstructor;
 import org.bson.UuidRepresentation;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
@@ -23,6 +24,7 @@ public class MongoDBConfiguration extends AbstractMongoClientConfiguration {
   protected void configureClientSettings(MongoClientSettings.Builder builder) {
     builder
         .uuidRepresentation(UuidRepresentation.STANDARD)
+        .writeConcern(WriteConcern.ACKNOWLEDGED)
         .applyToClusterSettings(
             clusterSettingsBuilder ->
                 clusterSettingsBuilder.hosts(

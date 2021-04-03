@@ -3,6 +3,8 @@ package com.example.orders;
 import com.example.orders.application.web.model.CreateOrderRequest;
 import com.example.orders.application.web.model.OrderResponse;
 import com.example.orders.domain.model.Item;
+import com.example.orders.infrastructure.repository.springdata.document.BookingResponseDocument;
+import com.example.orders.infrastructure.repository.springdata.document.BuyTicketResponseDocument;
 import com.example.orders.infrastructure.web.model.BookingResponse;
 import com.example.orders.infrastructure.web.model.BuyTicketResponse;
 import com.example.orders.infrastructure.web.model.CustomerWebModel;
@@ -43,9 +45,40 @@ class OrdersApplicationTests extends IntegrationTest {
 
     final var orderResponse = readValue(createOrderResponse.body().print(), OrderResponse.class);
 
+    verify(1, postRequestedFor(urlEqualTo("/tickets")));
+    verify(1, postRequestedFor(urlEqualTo("/booking")));
+    verify(0, deleteRequestedFor(urlEqualTo("/tickets")));
+    verify(0, deleteRequestedFor(urlEqualTo("/booking")));
+
     final var storedOrderOptional = springDataOrdersRepository.findById(orderResponse.getId());
 
     Assertions.assertTrue(storedOrderOptional.isPresent());
+
+    final var storedOrder = storedOrderOptional.get();
+
+    Assertions.assertEquals(2, storedOrder.getTimeline().getEvents().size());
+
+    final var buyTicketResponseDocument =
+        storedOrder.getTimeline().getEvents().stream()
+            .filter(
+                eventDocument ->
+                    BuyTicketResponseDocument.class.isAssignableFrom(eventDocument.getClass()))
+            .map(eventDocument -> (BuyTicketResponseDocument) eventDocument)
+            .findFirst()
+            .orElseThrow();
+
+    Assertions.assertNotNull(buyTicketResponseDocument.getTicketId());
+
+    final var bookingResponseDocument =
+        storedOrder.getTimeline().getEvents().stream()
+            .filter(
+                eventDocument ->
+                    BookingResponseDocument.class.isAssignableFrom(eventDocument.getClass()))
+            .map(eventDocument -> (BookingResponseDocument) eventDocument)
+            .findFirst()
+            .orElseThrow();
+
+    Assertions.assertNotNull(bookingResponseDocument.getBookingId());
   }
 
   private void mockBuyTicketSuccess() {
