@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Data
@@ -18,5 +19,23 @@ public class TimelineDocument {
         timeline.getEvents().stream()
             .map(event -> new EventDocument())
             .collect(Collectors.toList());
+  }
+
+  public Optional<BuyTicketResponseDocument> buyTicketResponseDocument() {
+    return this.events.stream()
+        .filter(
+            eventDocument ->
+                BuyTicketResponseDocument.class.isAssignableFrom(eventDocument.getClass()))
+        .map(eventDocument -> (BuyTicketResponseDocument) eventDocument)
+        .findFirst();
+  }
+
+  public Optional<BookingResponseDocument> bookingResponseDocument() {
+    return this.events.stream()
+        .filter(
+            eventDocument ->
+                BookingResponseDocument.class.isAssignableFrom(eventDocument.getClass()))
+        .map(eventDocument -> (BookingResponseDocument) eventDocument)
+        .findFirst();
   }
 }

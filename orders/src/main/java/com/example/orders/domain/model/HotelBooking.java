@@ -8,10 +8,8 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class Order {
-  private final UUID id;
-  private final Customer customer;
-  private final Items items;
-  private final Timeline timeline;
-  private final LocalDateTime date;
+public class HotelBooking {
+  private UUID bedroomId;
+  private LocalDateTime from;
+  private LocalDateTime to;
 }

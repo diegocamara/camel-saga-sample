@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface HotelWebClient {
 
-  BookingResponse createBooking(BookingRequest bookingRequest);
+  BookingResponse createBooking(BookingRequest bookingRequest, UUID transactionId);
 
   void cancelBooking(UUID bookingId);
 }

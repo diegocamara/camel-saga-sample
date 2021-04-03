@@ -3,12 +3,17 @@ package com.example.orders.domain.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.UUID;
-
 @Data
 @AllArgsConstructor
-public class CreateOrderInput {
-  private UUID customerId;
+public class Items {
   private FlightTicketPurchase flightTicketPurchase;
   private HotelBooking hotelBooking;
+
+  public boolean flightTicketPurchaseExists() {
+    return this.flightTicketPurchase != null;
+  }
+
+  public boolean hotelBookingExists() {
+    return this.hotelBooking != null;
+  }
 }

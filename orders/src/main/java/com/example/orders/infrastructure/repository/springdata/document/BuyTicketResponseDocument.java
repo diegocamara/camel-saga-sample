@@ -17,6 +17,7 @@ public class BuyTicketResponseDocument extends EventDocument {
   private BigDecimal price;
   private String from;
   private String destination;
+  private UUID transactionId;
 
   public BuyTicketResponseDocument(BuyTicketResponse buyTicketResponse) {
     final var ticket = buyTicketResponse.getTicket();
@@ -24,6 +25,7 @@ public class BuyTicketResponseDocument extends EventDocument {
     this.price = ticket.getPrice();
     this.from = ticket.getFrom();
     this.destination = ticket.getDestination();
+    this.transactionId = buyTicketResponse.getTransactionId();
     this.setDate(LocalDateTime.now());
   }
 }

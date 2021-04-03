@@ -1,6 +1,5 @@
 package com.example.orders.infrastructure.saga;
 
-import com.example.orders.domain.model.Item;
 import com.example.orders.domain.model.Order;
 import com.example.orders.infrastructure.repository.springdata.document.BookingResponseDocument;
 import com.example.orders.infrastructure.repository.springdata.document.BuyTicketResponseDocument;
@@ -17,7 +16,6 @@ import org.apache.camel.saga.InMemorySagaService;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Component
@@ -50,15 +48,14 @@ public class OrderSaga extends RouteBuilder {
     from(CREATE_ORDER_ENDPOINT)
         .id(CREATE_ORDER_ROUTE_ID)
         .saga()
-        .option("order", body())
+        .setHeader("transactionId", simple(UUID.randomUUID().toString()))
         .timeout(Duration.ofMinutes(1))
         .setProperty("order", body())
         .choice()
-        .when(containsItem(Item.BUY_FLIGHT_TICKET))
+        .when(containsFlightTicketPurchase())
         .to(BUY_FLIGHT_TICKET_ENDPOINT)
-        .setBody(exchangeProperty("order"))
         .choice()
-        .when(containsItem(Item.BOOKING_HOTEL))
+        .when(containsHotelBooking())
         .to(BOOKING_HOTEL_ENDPOINT)
         .end();
 
@@ -66,53 +63,69 @@ public class OrderSaga extends RouteBuilder {
         .id(BUY_FLIGHT_TICKET_ROUTE_ID)
         .saga()
         .propagation(SagaPropagation.MANDATORY)
-        .setProperty("order", body())
-        .option("order", body())
         .compensation(CANCEL_FLIGHT_TICKET_ENDPOINT)
+        .option("order", body())
         .bean(this, "buyTicketRequest")
         .bean(flightWebClient, "buyTicket(${body}, ${header.transactionId})")
-        .bean(this, "updateOrderForBuyTicket(${exchangeProperty.order}, ${body})");
+        .bean(this, "updateOrderForBuyTicket(${exchangeProperty.order}, ${body})")
+        .end();
 
     from(CANCEL_FLIGHT_TICKET_ENDPOINT)
+        .log("********** ${body}")
         .id(CANCEL_FLIGHT_TICKET_ROUTE_ID)
-        .transform(header("buyTicketResponse"))
+        .transform(header("order"))
         .bean(this, "cancelTicketPurchaseRequest")
-        .bean(flightWebClient, "cancelTicket");
+        .bean(flightWebClient, "cancelTicket")
+        .end();
 
     from(BOOKING_HOTEL_ENDPOINT)
         .id(BOOKING_HOTEL_ROUTE_ID)
+        .transform(exchangeProperty("order"))
         .saga()
         .propagation(SagaPropagation.MANDATORY)
-        .setProperty("order", body())
-        .compensation(CANCEL_BOOKING_HOTEL_ENDPOINT)
+        //        .compensation(CANCEL_BOOKING_HOTEL_ENDPOINT)
+        .option("order", body())
         .bean(this, "bookingRequest")
-        .bean(hotelWebClient, "createBooking(${body})")
+        .bean(hotelWebClient, "createBooking(${body}, ${headers.transactionId})")
         .bean(this, "updateOrderForBooking(${exchangeProperty.order}, ${body})");
 
     from(CANCEL_BOOKING_HOTEL_ENDPOINT)
         .id(CANCEL_BOOKING_HOTEL_ROUTE_ID)
-        .transform(simple("${header.bookingResponse.id}"))
+        .transform(header("order"))
+        .bean(this, "bookingId")
         .bean(hotelWebClient, "cancelBooking");
   }
 
   protected BuyTicketRequest buyTicketRequest(Order order) {
-    final var ticketId = UUID.randomUUID();
+    final var ticketId = order.getItems().getFlightTicketPurchase().getTicketId();
     final var customerId = order.getCustomer().getId();
     return new BuyTicketRequest(ticketId, customerId);
   }
 
-  protected CancelTicketPurchaseRequest cancelTicketPurchaseRequest(
-      BuyTicketResponse buyTicketResponse) {
-    final var ticketId = buyTicketResponse.getTicket().getId();
-    final var customerId = buyTicketResponse.getCustomer().getId();
-    return new CancelTicketPurchaseRequest(ticketId, customerId);
+  protected CancelTicketPurchaseRequest cancelTicketPurchaseRequest(Order order) {
+
+    final var orderDocument = springDataOrdersRepository.findById(order.getId()).orElseThrow();
+
+    final var ticketId =
+        orderDocument
+            .getTimeline()
+            .buyTicketResponseDocument()
+            .map(BuyTicketResponseDocument::getTicketId)
+            .orElseThrow();
+
+    return new CancelTicketPurchaseRequest(ticketId, order.getCustomer().getId());
+  }
+
+  protected UUID bookingId(Order order) {
+    return null;
   }
 
   protected BookingRequest bookingRequest(Order order) {
-    final var bedroomId = UUID.randomUUID();
+    final var hotelBooking = order.getItems().getHotelBooking();
     final var customerId = order.getCustomer().getId();
-    final var from = LocalDateTime.now();
-    final var to = from.plusDays(2);
+    final var bedroomId = hotelBooking.getBedroomId();
+    final var from = hotelBooking.getFrom();
+    final var to = hotelBooking.getTo();
     return new BookingRequest(bedroomId, customerId, from, to);
   }
 
@@ -141,10 +154,17 @@ public class OrderSaga extends RouteBuilder {
         });
   }
 
-  private Predicate containsItem(Item item) {
+  private Predicate containsFlightTicketPurchase() {
     return exchange -> {
-      final var order = exchange.getMessage().getBody(Order.class);
-      return order.getItems().contains(item);
+      final var order = exchange.getProperty("order", Order.class);
+      return order.getItems().flightTicketPurchaseExists();
+    };
+  }
+
+  private Predicate containsHotelBooking() {
+    return exchange -> {
+      final var order = exchange.getProperty("order", Order.class);
+      return order.getItems().hotelBookingExists();
     };
   }
 }

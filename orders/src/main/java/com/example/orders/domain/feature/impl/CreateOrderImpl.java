@@ -23,7 +23,8 @@ public class CreateOrderImpl implements CreateOrder {
 
   private Order createOrder(CreateOrderInput createOrderInput) {
     final var customer = new Customer(createOrderInput.getCustomerId());
-    final var items = createOrderInput.getItems();
+    final var items =
+        new Items(createOrderInput.getFlightTicketPurchase(), createOrderInput.getHotelBooking());
     return new Order(UUID.randomUUID(), customer, items, new Timeline(), LocalDateTime.now());
   }
 }

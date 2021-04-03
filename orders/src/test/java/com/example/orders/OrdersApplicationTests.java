@@ -1,14 +1,12 @@
 package com.example.orders;
 
 import com.example.orders.application.web.model.CreateOrderRequest;
+import com.example.orders.application.web.model.FlightTicketPurchaseWebModel;
+import com.example.orders.application.web.model.HotelBookingWebModel;
 import com.example.orders.application.web.model.OrderResponse;
-import com.example.orders.domain.model.Item;
 import com.example.orders.infrastructure.repository.springdata.document.BookingResponseDocument;
 import com.example.orders.infrastructure.repository.springdata.document.BuyTicketResponseDocument;
-import com.example.orders.infrastructure.web.model.BookingResponse;
-import com.example.orders.infrastructure.web.model.BuyTicketResponse;
-import com.example.orders.infrastructure.web.model.CustomerWebModel;
-import com.example.orders.infrastructure.web.model.TicketWebModel;
+import com.example.orders.infrastructure.web.model.*;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,38 +15,54 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 class OrdersApplicationTests extends IntegrationTest {
 
+  public static final String TRANSACTION_REFERENCE_HEADER = "transaction-reference";
   private final UUID customerId = UUID.randomUUID();
 
   @Test
   void shouldCreateCustomerOrder() {
 
-    mockBuyTicketSuccess();
-    mockBookingRequestSuccess();
+    final var ticketId = UUID.randomUUID();
+    final var bedroomId = UUID.randomUUID();
 
     final var createOrderRequest = new CreateOrderRequest();
     createOrderRequest.setCustomerId(customerId);
-    createOrderRequest.setItems(Arrays.asList(Item.BUY_FLIGHT_TICKET, Item.BOOKING_HOTEL));
+
+    final var flightTicketPurchaseWebModel = new FlightTicketPurchaseWebModel();
+    flightTicketPurchaseWebModel.setTicketId(ticketId);
+    createOrderRequest.getItems().setFlightTicketPurchaseWebModel(flightTicketPurchaseWebModel);
+
+    final var hotelBookingWebModel = new HotelBookingWebModel();
+    hotelBookingWebModel.setBedroomId(bedroomId);
+    final var now = LocalDateTime.now();
+    hotelBookingWebModel.setFrom(now);
+    hotelBookingWebModel.setTo(now.plusDays(2));
+    createOrderRequest.getItems().setHotelBookingWebModel(hotelBookingWebModel);
 
     final var createOrderRequestSpecification =
         RestAssured.given()
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .body(writeValueAsString(createOrderRequest));
 
+    final var buyTicketRequest = new BuyTicketRequest(ticketId, customerId);
+
+    mockBuyTicketSuccess(buyTicketRequest);
+
+    final var bookingRequest =
+        new BookingRequest(
+            bedroomId, customerId, hotelBookingWebModel.getFrom(), hotelBookingWebModel.getTo());
+
+    mockBookingRequestSuccess(bookingRequest);
+
     final var createOrderResponse = createOrderRequestSpecification.post("/orders");
 
     final var orderResponse = readValue(createOrderResponse.body().print(), OrderResponse.class);
-
-    verify(1, postRequestedFor(urlEqualTo("/tickets")));
-    verify(1, postRequestedFor(urlEqualTo("/booking")));
-    verify(0, deleteRequestedFor(urlEqualTo("/tickets")));
-    verify(0, deleteRequestedFor(urlEqualTo("/booking")));
 
     final var storedOrderOptional = springDataOrdersRepository.findById(orderResponse.getId());
 
@@ -79,15 +93,99 @@ class OrdersApplicationTests extends IntegrationTest {
             .orElseThrow();
 
     Assertions.assertNotNull(bookingResponseDocument.getBookingId());
+
+    verify(
+        1,
+        postRequestedFor(urlEqualTo("/tickets"))
+            .withHeader(
+                TRANSACTION_REFERENCE_HEADER,
+                equalTo(buyTicketResponseDocument.getTransactionId().toString()))
+            .withRequestBody(equalToJson(writeValueAsString(buyTicketRequest))));
+    verify(
+        1,
+        postRequestedFor(urlEqualTo("/booking"))
+            .withHeader(
+                TRANSACTION_REFERENCE_HEADER,
+                equalTo(bookingResponseDocument.getTransactionId().toString()))
+            .withRequestBody(equalToJson(writeValueAsString(bookingRequest))));
+    verify(0, deleteRequestedFor(urlEqualTo("/tickets")));
+    verify(0, deleteRequestedFor(urlEqualTo("/booking")));
   }
 
-  private void mockBuyTicketSuccess() {
+  @Test
+  void shouldRollbackCustomerOrder() {
 
     final var ticketId = UUID.randomUUID();
+    final var bedroomId = UUID.randomUUID();
+
+    final var createOrderRequest = new CreateOrderRequest();
+    createOrderRequest.setCustomerId(customerId);
+
+    final var flightTicketPurchaseWebModel = new FlightTicketPurchaseWebModel();
+    flightTicketPurchaseWebModel.setTicketId(ticketId);
+    createOrderRequest.getItems().setFlightTicketPurchaseWebModel(flightTicketPurchaseWebModel);
+
+    final var hotelBookingWebModel = new HotelBookingWebModel();
+    hotelBookingWebModel.setBedroomId(bedroomId);
+    final var now = LocalDateTime.now();
+    hotelBookingWebModel.setFrom(now);
+    hotelBookingWebModel.setTo(now.plusDays(2));
+    createOrderRequest.getItems().setHotelBookingWebModel(hotelBookingWebModel);
+
+    final var createOrderRequestSpecification =
+        RestAssured.given()
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .body(writeValueAsString(createOrderRequest));
+
+    final var buyTicketRequest = new BuyTicketRequest(ticketId, customerId);
+
+    mockBuyTicketSuccess(buyTicketRequest);
+
+    final var bookingRequest =
+        new BookingRequest(
+            bedroomId, customerId, hotelBookingWebModel.getFrom(), hotelBookingWebModel.getTo());
+
+    mockBookingRequestFail(bookingRequest);
+
+    final var cancelTicketPurchaseRequest = new CancelTicketPurchaseRequest(ticketId, customerId);
+
+    mockCancelTicketPurchaseRequestSuccess(cancelTicketPurchaseRequest);
+
+    final var createOrderResponse = createOrderRequestSpecification.post("/orders");
+
+    Assertions.assertEquals(
+        HttpStatus.INTERNAL_SERVER_ERROR.value(), createOrderResponse.statusCode());
+
+    verify(
+        1,
+        postRequestedFor(urlEqualTo("/tickets"))
+            .withHeader(TRANSACTION_REFERENCE_HEADER, matching(".*"))
+            .withRequestBody(equalToJson(writeValueAsString(buyTicketRequest))));
+    verify(
+        1,
+        postRequestedFor(urlEqualTo("/booking"))
+            .withHeader(TRANSACTION_REFERENCE_HEADER, matching(".*"))
+            .withRequestBody(equalToJson(writeValueAsString(bookingRequest))));
+    verify(
+        1,
+        deleteRequestedFor(urlEqualTo("/tickets"))
+            .withRequestBody(equalToJson(writeValueAsString(cancelTicketPurchaseRequest))));
+    verify(0, deleteRequestedFor(urlEqualTo("/booking")));
+  }
+
+  private void mockCancelTicketPurchaseRequestSuccess(
+      CancelTicketPurchaseRequest cancelTicketPurchaseRequest) {
+    stubFor(
+        delete(urlEqualTo("/tickets"))
+            .withRequestBody(equalToJson(writeValueAsString(cancelTicketPurchaseRequest)))
+            .willReturn(aResponse().withStatus(HttpStatus.OK.value())));
+  }
+
+  private void mockBuyTicketSuccess(BuyTicketRequest buyTicketRequest) {
 
     final var buyTicketResponse = new BuyTicketResponse();
     final var ticket = new TicketWebModel();
-    ticket.setId(ticketId);
+    ticket.setId(buyTicketRequest.getTicketId());
     ticket.setFrom("From");
     ticket.setDestination("Destination");
     ticket.setPrice(BigDecimal.TEN);
@@ -98,6 +196,7 @@ class OrdersApplicationTests extends IntegrationTest {
 
     stubFor(
         post(urlEqualTo("/tickets"))
+            .withRequestBody(equalToJson(writeValueAsString(buyTicketRequest)))
             .willReturn(
                 aResponse()
                     .withStatus(HttpStatus.CREATED.value())
@@ -105,14 +204,13 @@ class OrdersApplicationTests extends IntegrationTest {
                     .withBody(writeValueAsString(buyTicketResponse))));
   }
 
-  private void mockBookingRequestSuccess() {
+  private void mockBookingRequestSuccess(BookingRequest bookingRequest) {
 
     final var bookingId = UUID.randomUUID();
-    final var bedroomId = UUID.randomUUID();
 
     final var bookingResponse = new BookingResponse();
     bookingResponse.setId(bookingId);
-    bookingResponse.setBedroomId(bedroomId);
+    bookingResponse.setBedroomId(bookingRequest.getBedroomId());
 
     stubFor(
         post(urlEqualTo("/booking"))
@@ -121,5 +219,21 @@ class OrdersApplicationTests extends IntegrationTest {
                     .withStatus(HttpStatus.CREATED.value())
                     .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .withBody(writeValueAsString(bookingResponse))));
+  }
+
+  private void mockBookingRequestFail(BookingRequest bookingRequest) {
+
+    final var bookingId = UUID.randomUUID();
+
+    final var bookingResponse = new BookingResponse();
+    bookingResponse.setId(bookingId);
+    bookingResponse.setBedroomId(bookingRequest.getBedroomId());
+
+    stubFor(
+        post(urlEqualTo("/booking"))
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatus.CONFLICT.value())
+                    .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)));
   }
 }

@@ -7,8 +7,6 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class CreateOrderInput {
-  private UUID customerId;
-  private FlightTicketPurchase flightTicketPurchase;
-  private HotelBooking hotelBooking;
+public class FlightTicketPurchase {
+  private UUID ticketId;
 }

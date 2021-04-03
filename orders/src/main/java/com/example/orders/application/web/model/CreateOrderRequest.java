@@ -1,19 +1,17 @@
 package com.example.orders.application.web.model;
 
 import com.example.orders.domain.model.CreateOrderInput;
-import com.example.orders.domain.model.Item;
 import lombok.Data;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
 public class CreateOrderRequest {
-
   private UUID customerId;
-  private List<Item> items;
+  private ItemsWebModel items = new ItemsWebModel();
 
   public CreateOrderInput toCreateOrderInput() {
-    return new CreateOrderInput(this.customerId, this.items);
+    return new CreateOrderInput(
+        this.customerId, this.items.flightTicketPurchase(), this.items.hotelBooking());
   }
 }

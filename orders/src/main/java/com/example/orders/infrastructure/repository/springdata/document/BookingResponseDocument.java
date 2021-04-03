@@ -14,10 +14,12 @@ import java.util.UUID;
 public class BookingResponseDocument extends EventDocument {
   private UUID bookingId;
   private UUID bedroomId;
+  private UUID transactionId;
 
   public BookingResponseDocument(BookingResponse bookingResponse) {
     this.bookingId = bookingResponse.getId();
     this.bedroomId = bookingResponse.getBedroomId();
+    this.transactionId = bookingResponse.getTransactionId();
     this.setDate(LocalDateTime.now());
   }
 }

@@ -8,4 +8,5 @@ import java.util.UUID;
 public class BookingResponse {
   private UUID id;
   private UUID bedroomId;
+  private UUID transactionId;
 }
