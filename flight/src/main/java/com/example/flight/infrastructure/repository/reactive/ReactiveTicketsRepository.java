@@ -1,6 +1,6 @@
-package com.example.flight.infrasctructure.repository.reactive;
+package com.example.flight.infrastructure.repository.reactive;
 
-import com.example.flight.infrasctructure.repository.table.TicketTable;
+import com.example.flight.infrastructure.repository.table.TicketTable;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 import java.util.UUID;

@@ -6,11 +6,10 @@ import com.example.flight.application.web.model.CancelTicketPurchaseRequest;
 import com.example.flight.domain.model.Customer;
 import com.example.flight.domain.model.Ticket;
 import com.example.flight.domain.model.TicketCustomerRelationship;
-import com.example.flight.infrasctructure.gateway.model.CreditRequest;
-import com.example.flight.infrasctructure.gateway.model.CreditResponse;
-import com.example.flight.infrasctructure.gateway.model.DebitRequest;
-import com.example.flight.infrasctructure.gateway.model.DebitResponse;
-import com.example.flight.infrasctructure.repository.table.Operation;
+import com.example.flight.infrastructure.gateway.model.CreditRequest;
+import com.example.flight.infrastructure.gateway.model.CreditResponse;
+import com.example.flight.infrastructure.gateway.model.DebitRequest;
+import com.example.flight.infrastructure.gateway.model.DebitResponse;
 import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Assertions;
@@ -20,13 +19,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 class FlightApplicationTests extends IntegrationTest {
 
-  public static final String TRANSACTION_REFERENCE_HEADER = "transaction-reference";
+  public static final String OPERATION_REFERENCE_HEADER = "operation-reference";
   private final UUID customerId = UUID.randomUUID();
 
   @Test
@@ -53,7 +53,7 @@ class FlightApplicationTests extends IntegrationTest {
             .headers(
                 HttpHeaders.CONTENT_TYPE,
                 MediaType.APPLICATION_JSON_VALUE,
-                TRANSACTION_REFERENCE_HEADER,
+                OPERATION_REFERENCE_HEADER,
                 transactionReference)
             .body(writeValueAsString(buyTicketRequest));
 
@@ -104,15 +104,15 @@ class FlightApplicationTests extends IntegrationTest {
     buyTicketRequest.setTicketId(ticket.getId());
     buyTicketRequest.setCustomerId(customerId);
 
-    final var transactionReference = UUID.randomUUID().toString();
+    final var operationReference = UUID.randomUUID().toString();
 
     final var buyTicketsRequestSpecification =
         RestAssured.given()
             .headers(
                 HttpHeaders.CONTENT_TYPE,
                 MediaType.APPLICATION_JSON_VALUE,
-                TRANSACTION_REFERENCE_HEADER,
-                transactionReference)
+                OPERATION_REFERENCE_HEADER,
+                operationReference)
             .body(writeValueAsString(buyTicketRequest));
 
     final var url = "/tickets";
@@ -148,7 +148,7 @@ class FlightApplicationTests extends IntegrationTest {
 
     secondBuyTicketResponse
         .then()
-        .statusCode(HttpStatus.OK.value())
+        .statusCode(HttpStatus.CREATED.value())
         .body(
             "ticket.id",
             CoreMatchers.is(ticket.getId().toString()),
@@ -160,10 +160,16 @@ class FlightApplicationTests extends IntegrationTest {
             CoreMatchers.is(customerId.toString()));
 
     final var storedOperation =
-        reactiveOperationsRepository.findById(UUID.fromString(transactionReference)).block();
+        reactiveOperationsRepository.findById(UUID.fromString(operationReference)).block();
+
+    final var storedOperationBuyTicketResponse =
+        readValue(
+            Objects.requireNonNull(storedOperation).getOutput().asString(),
+            BuyTicketResponse.class);
 
     Assertions.assertNotNull(storedOperation);
-    Assertions.assertEquals(Operation.BUY_TICKET, storedOperation.getOperation());
+    Assertions.assertNotNull(storedOperationBuyTicketResponse);
+    Assertions.assertEquals(buyTicketResponseModel, storedOperationBuyTicketResponse);
   }
 
   @Test

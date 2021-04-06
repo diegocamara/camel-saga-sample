@@ -1,8 +1,8 @@
 package com.example.flight;
 
 import com.example.flight.domain.model.TicketsCustomerRelationshipRepository;
-import com.example.flight.infrasctructure.repository.impl.R2DBCEntityTemplateTicketsRepository;
-import com.example.flight.infrasctructure.repository.reactive.ReactiveOperationRepository;
+import com.example.flight.infrastructure.repository.impl.R2DBCEntityTemplateTicketsRepository;
+import com.example.flight.infrastructure.repository.reactive.ReactiveOperationsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -51,8 +51,8 @@ public class IntegrationTest {
   protected static final TicketsCustomerRelationshipRepository
       ticketsCustomerRelationshipRepository =
           configurableApplicationContext.getBean(TicketsCustomerRelationshipRepository.class);
-  protected static final ReactiveOperationRepository reactiveOperationsRepository =
-      configurableApplicationContext.getBean(ReactiveOperationRepository.class);
+  protected static final ReactiveOperationsRepository reactiveOperationsRepository =
+      configurableApplicationContext.getBean(ReactiveOperationsRepository.class);
   private static final Resource schemaResource = new ClassPathResource("schema.sql");
   private static final Resource clearDBResource = new ClassPathResource("cleardb.sql");
 

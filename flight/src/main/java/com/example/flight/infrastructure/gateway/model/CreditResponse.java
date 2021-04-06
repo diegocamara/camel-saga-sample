@@ -1,4 +1,4 @@
-package com.example.flight.infrasctructure.gateway.model;
+package com.example.flight.infrastructure.gateway.model;
 
 import lombok.Data;
 

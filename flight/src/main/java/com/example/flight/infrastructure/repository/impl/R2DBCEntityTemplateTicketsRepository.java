@@ -1,9 +1,9 @@
-package com.example.flight.infrasctructure.repository.impl;
+package com.example.flight.infrastructure.repository.impl;
 
 import com.example.flight.domain.model.Ticket;
 import com.example.flight.domain.model.TicketsRepository;
-import com.example.flight.infrasctructure.repository.reactive.ReactiveTicketsRepository;
-import com.example.flight.infrasctructure.repository.table.TicketTable;
+import com.example.flight.infrastructure.repository.reactive.ReactiveTicketsRepository;
+import com.example.flight.infrastructure.repository.table.TicketTable;
 import lombok.AllArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Repository;

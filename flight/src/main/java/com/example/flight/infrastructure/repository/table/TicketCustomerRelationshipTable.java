@@ -1,4 +1,4 @@
-package com.example.flight.infrasctructure.repository.table;
+package com.example.flight.infrastructure.repository.table;
 
 import com.example.flight.domain.model.TicketCustomerRelationship;
 import lombok.Data;

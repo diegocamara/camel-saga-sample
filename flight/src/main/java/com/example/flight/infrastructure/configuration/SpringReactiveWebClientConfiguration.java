@@ -1,6 +1,6 @@
-package com.example.flight.infrasctructure.configuration;
+package com.example.flight.infrastructure.configuration;
 
-import com.example.flight.infrasctructure.configuration.properties.WebClientProperties;
+import com.example.flight.infrastructure.configuration.properties.WebClientProperties;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;

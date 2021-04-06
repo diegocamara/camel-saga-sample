@@ -15,6 +15,7 @@ CREATE TABLE ticket_customer (
 
 CREATE TABLE operations (
     id UUID NOT NULL,
-    operation_name VARCHAR(255) NOT NULL,
+    status VARCHAR(255) NOT NULL,
+    output_field VARCHAR(512) NOT NULL,
     CONSTRAINT operations_pk PRIMARY KEY (id)
 );

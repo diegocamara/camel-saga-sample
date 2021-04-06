@@ -1,4 +1,4 @@
-package com.example.flight.infrasctructure.repository.impl;
+package com.example.flight.infrastructure.repository.impl;
 
 import com.example.flight.domain.model.Customer;
 import com.example.flight.domain.model.Ticket;

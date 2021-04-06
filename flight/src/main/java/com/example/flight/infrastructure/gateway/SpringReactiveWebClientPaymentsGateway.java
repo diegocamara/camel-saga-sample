@@ -1,10 +1,10 @@
-package com.example.flight.infrasctructure.gateway;
+package com.example.flight.infrastructure.gateway;
 
 import com.example.flight.domain.model.*;
-import com.example.flight.infrasctructure.gateway.model.CreditRequest;
-import com.example.flight.infrasctructure.gateway.model.CreditResponse;
-import com.example.flight.infrasctructure.gateway.model.DebitRequest;
-import com.example.flight.infrasctructure.gateway.model.DebitResponse;
+import com.example.flight.infrastructure.gateway.model.CreditRequest;
+import com.example.flight.infrastructure.gateway.model.CreditResponse;
+import com.example.flight.infrastructure.gateway.model.DebitRequest;
+import com.example.flight.infrastructure.gateway.model.DebitResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
