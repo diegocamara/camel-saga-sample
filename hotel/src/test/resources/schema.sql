@@ -17,8 +17,7 @@ CREATE TABLE booking (
 
 CREATE TABLE operations (
     id UUID NOT NULL,
-    booking_id UUID NOT NULL,
-    operation_name VARCHAR(255) NOT NULL,
-    CONSTRAINT operations_pk PRIMARY KEY (id),
-    CONSTRAINT operations_booking_fk FOREIGN KEY (booking_id) REFERENCES booking (id)
+    status VARCHAR(255) NOT NULL,
+    output_field VARCHAR(512) NOT NULL,
+    CONSTRAINT operations_pk PRIMARY KEY (id)
 );

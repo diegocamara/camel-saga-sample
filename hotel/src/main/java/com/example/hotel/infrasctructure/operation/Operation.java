@@ -1,4 +1,4 @@
-package com.example.flight.infrastructure.operation;
+package com.example.hotel.infrasctructure.operation;
 
 import lombok.Data;
 

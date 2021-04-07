@@ -1,11 +1,10 @@
 package com.example.hotel.application.web.controller;
 
-import com.example.hotel.application.web.controller.transaction.CancelBookingTransaction;
-import com.example.hotel.application.web.controller.transaction.CreateBookingTransaction;
+import com.example.hotel.application.web.controller.transaction.booking.BookingTransactionManager;
 import com.example.hotel.application.web.model.BookingRequest;
 import com.example.hotel.application.web.model.BookingResponse;
-import com.example.hotel.infrasctructure.repository.OperationsRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -17,25 +16,25 @@ import java.util.UUID;
 @RequestMapping("/booking")
 public class BookingController {
 
-  private final CreateBookingTransaction createBookingTransaction;
-  private final CancelBookingTransaction cancelBookingTransaction;
-  private final OperationsRepository operationsRepository;
+  public static final String OPERATION_REFERENCE_HEADER = "operation-reference";
+  private final BookingTransactionManager bookingTransactionManager;
 
   @PostMapping
   public Mono<ResponseEntity<BookingResponse>> createBooking(
-      @RequestHeader("transaction-reference") UUID transactionReference,
+      @RequestHeader(OPERATION_REFERENCE_HEADER) UUID operationReference,
       @RequestBody BookingRequest bookingRequest) {
-    return createBookingTransaction
-        .execute(transactionReference, bookingRequest)
-        .onErrorResume(
-            throwable ->
-                operationsRepository
-                    .findById(transactionReference)
-                    .map(operationTable -> ResponseEntity.ok(new BookingResponse(operationTable))));
+    return bookingTransactionManager
+        .execute(bookingRequest, operationReference)
+        .map(
+            bookingOperation ->
+                ResponseEntity.status(HttpStatus.CREATED).body(bookingOperation.getOutput()));
   }
 
-  @DeleteMapping("/{bookingId}")
-  public Mono<ResponseEntity<?>> cancelBooking(@PathVariable("bookingId") UUID bookingId) {
-    return cancelBookingTransaction.execute(bookingId);
+  @DeleteMapping
+  public Mono<ResponseEntity<?>> cancelBooking(
+      @RequestHeader(OPERATION_REFERENCE_HEADER) UUID operationReference) {
+    return bookingTransactionManager
+        .rollback(operationReference)
+        .map(unused -> ResponseEntity.ok().build());
   }
 }

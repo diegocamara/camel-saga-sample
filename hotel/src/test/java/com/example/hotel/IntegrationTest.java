@@ -1,8 +1,10 @@
 package com.example.hotel;
 
+import com.example.hotel.application.web.controller.transaction.booking.BookingOperation;
+import com.example.hotel.infrasctructure.operation.OperationsRepository;
 import com.example.hotel.infrasctructure.repository.impl.R2DBCBedroomsRepository;
 import com.example.hotel.infrasctructure.repository.impl.R2DBCBookingRepository;
-import com.example.hotel.infrasctructure.repository.impl.R2DBCOperationsRepository;
+import com.example.hotel.infrasctructure.repository.impl.R2DBCEntityTemplateOperationsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -50,8 +52,8 @@ public class IntegrationTest {
       configurableApplicationContext.getBean(R2DBCBedroomsRepository.class);
   protected static final R2DBCBookingRepository r2dbcBookingRepository =
       configurableApplicationContext.getBean(R2DBCBookingRepository.class);
-  protected static final R2DBCOperationsRepository r2dbcOperationsRepository =
-      configurableApplicationContext.getBean(R2DBCOperationsRepository.class);
+  protected static final OperationsRepository<BookingOperation> r2dbcOperationsRepository =
+      configurableApplicationContext.getBean(R2DBCEntityTemplateOperationsRepository.class);
   private static final Resource schemaResource = new ClassPathResource("schema.sql");
   private static final Resource clearDBResource = new ClassPathResource("cleardb.sql");
 

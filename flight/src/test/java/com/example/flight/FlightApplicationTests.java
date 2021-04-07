@@ -1,8 +1,9 @@
 package com.example.flight;
 
+import com.example.flight.application.web.controller.TicketsController;
+import com.example.flight.application.web.controller.transaction.buyticket.BuyTicketOperation;
 import com.example.flight.application.web.model.BuyTicketRequest;
 import com.example.flight.application.web.model.BuyTicketResponse;
-import com.example.flight.application.web.model.CancelTicketPurchaseRequest;
 import com.example.flight.domain.model.Customer;
 import com.example.flight.domain.model.Ticket;
 import com.example.flight.domain.model.TicketCustomerRelationship;
@@ -10,6 +11,7 @@ import com.example.flight.infrastructure.gateway.model.CreditRequest;
 import com.example.flight.infrastructure.gateway.model.CreditResponse;
 import com.example.flight.infrastructure.gateway.model.DebitRequest;
 import com.example.flight.infrastructure.gateway.model.DebitResponse;
+import com.example.flight.infrastructure.operation.Status;
 import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Assertions;
@@ -26,7 +28,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 class FlightApplicationTests extends IntegrationTest {
 
-  public static final String OPERATION_REFERENCE_HEADER = "operation-reference";
   private final UUID customerId = UUID.randomUUID();
 
   @Test
@@ -53,7 +54,7 @@ class FlightApplicationTests extends IntegrationTest {
             .headers(
                 HttpHeaders.CONTENT_TYPE,
                 MediaType.APPLICATION_JSON_VALUE,
-                OPERATION_REFERENCE_HEADER,
+                TicketsController.OPERATION_REFERENCE_HEADER,
                 transactionReference)
             .body(writeValueAsString(buyTicketRequest));
 
@@ -111,7 +112,7 @@ class FlightApplicationTests extends IntegrationTest {
             .headers(
                 HttpHeaders.CONTENT_TYPE,
                 MediaType.APPLICATION_JSON_VALUE,
-                OPERATION_REFERENCE_HEADER,
+                TicketsController.OPERATION_REFERENCE_HEADER,
                 operationReference)
             .body(writeValueAsString(buyTicketRequest));
 
@@ -190,14 +191,21 @@ class FlightApplicationTests extends IntegrationTest {
 
     ticketsCustomerRelationshipRepository.save(ticketCustomerRelationship).block();
 
-    final var cancelTicketPurchaseRequest = new CancelTicketPurchaseRequest();
-    cancelTicketPurchaseRequest.setTicketId(ticket.getId());
-    cancelTicketPurchaseRequest.setCustomerId(customerId);
+    final var buyTicketResponse = new BuyTicketResponse(ticketCustomerRelationship);
+
+    final var operationReference = UUID.randomUUID();
+
+    final var buyTicketOperation = new BuyTicketOperation(operationReference, buyTicketResponse);
+    buyTicketOperation.setStatus(Status.EXECUTED);
+    buyTicketOperationsRepository.save(buyTicketOperation).block();
 
     final var cancelTicketPurchaseRequestSpecification =
         RestAssured.given()
-            .headers(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .body(writeValueAsString(cancelTicketPurchaseRequest));
+            .headers(
+                HttpHeaders.CONTENT_TYPE,
+                MediaType.APPLICATION_JSON_VALUE,
+                TicketsController.OPERATION_REFERENCE_HEADER,
+                operationReference);
 
     final var cancelTicketPurchaseResponse =
         cancelTicketPurchaseRequestSpecification.delete("/tickets");
@@ -208,6 +216,13 @@ class FlightApplicationTests extends IntegrationTest {
         ticketsCustomerRelationshipRepository.findById(ticket.getId(), customerId).block();
 
     Assertions.assertNull(storedTicketCustomerRelationship);
+
+    final var storedBuyTicketOperation =
+        buyTicketOperationsRepository.findByOperationReference(operationReference).block();
+
+    Assertions.assertNotNull(storedBuyTicketOperation);
+    Assertions.assertEquals(buyTicketResponse, storedBuyTicketOperation.getOutput());
+    Assertions.assertTrue(storedBuyTicketOperation.isRollback());
   }
 
   private void mockPaymentsGatewayDebitCall() {

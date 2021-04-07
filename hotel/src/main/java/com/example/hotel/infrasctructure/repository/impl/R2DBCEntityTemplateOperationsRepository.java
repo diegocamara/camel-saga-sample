@@ -1,9 +1,9 @@
-package com.example.flight.infrastructure.repository.impl;
+package com.example.hotel.infrasctructure.repository.impl;
 
-import com.example.flight.application.web.controller.transaction.buyticket.BuyTicketOperation;
-import com.example.flight.application.web.model.BuyTicketResponse;
-import com.example.flight.infrastructure.operation.OperationsRepository;
-import com.example.flight.infrastructure.operation.Status;
+import com.example.hotel.application.web.controller.transaction.booking.BookingOperation;
+import com.example.hotel.application.web.model.BookingResponse;
+import com.example.hotel.infrasctructure.operation.OperationsRepository;
+import com.example.hotel.infrasctructure.operation.Status;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
@@ -18,14 +18,14 @@ import java.util.UUID;
 @Repository
 @AllArgsConstructor
 public class R2DBCEntityTemplateOperationsRepository
-    implements OperationsRepository<BuyTicketOperation> {
+    implements OperationsRepository<BookingOperation> {
 
   private final ObjectMapper objectMapper;
   private final R2dbcEntityTemplate r2dbcEntityTemplate;
 
   @Override
   @SneakyThrows
-  public Mono<Void> save(BuyTicketOperation operation) {
+  public Mono<Void> save(BookingOperation operation) {
     final var output = objectMapper.writeValueAsString(operation.getOutput());
     return r2dbcEntityTemplate
         .getDatabaseClient()
@@ -40,7 +40,7 @@ public class R2DBCEntityTemplateOperationsRepository
   }
 
   @Override
-  public Mono<BuyTicketOperation> findByOperationReference(UUID operationReference) {
+  public Mono<BookingOperation> findByOperationReference(UUID operationReference) {
     return r2dbcEntityTemplate
         .getDatabaseClient()
         .sql("SELECT * FROM operations WHERE id = :operationReference")
@@ -51,7 +51,7 @@ public class R2DBCEntityTemplateOperationsRepository
 
   @Override
   @SneakyThrows
-  public Mono<Void> update(BuyTicketOperation operation) {
+  public Mono<Void> update(BookingOperation operation) {
     final var output = objectMapper.writeValueAsString(operation.getOutput());
     return r2dbcEntityTemplate
         .getDatabaseClient()
@@ -65,10 +65,10 @@ public class R2DBCEntityTemplateOperationsRepository
   }
 
   @SneakyThrows
-  private BuyTicketOperation operation(Row row, RowMetadata rowMetadata) {
+  private BookingOperation operation(Row row, RowMetadata rowMetadata) {
     final var output =
-        objectMapper.readValue(row.get("output_field", String.class), BuyTicketResponse.class);
-    final var buyTicketOperation = new BuyTicketOperation(row.get("id", UUID.class), output);
+        objectMapper.readValue(row.get("output_field", String.class), BookingResponse.class);
+    final var buyTicketOperation = new BookingOperation(row.get("id", UUID.class), output);
     buyTicketOperation.setStatus(Status.valueOf(row.get("status", String.class)));
     return buyTicketOperation;
   }

@@ -1,6 +1,9 @@
 package com.example.flight;
 
+import com.example.flight.application.web.controller.transaction.buyticket.BuyTicketOperation;
 import com.example.flight.domain.model.TicketsCustomerRelationshipRepository;
+import com.example.flight.infrastructure.operation.OperationsRepository;
+import com.example.flight.infrastructure.repository.impl.R2DBCEntityTemplateOperationsRepository;
 import com.example.flight.infrastructure.repository.impl.R2DBCEntityTemplateTicketsRepository;
 import com.example.flight.infrastructure.repository.reactive.ReactiveOperationsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,6 +56,8 @@ public class IntegrationTest {
           configurableApplicationContext.getBean(TicketsCustomerRelationshipRepository.class);
   protected static final ReactiveOperationsRepository reactiveOperationsRepository =
       configurableApplicationContext.getBean(ReactiveOperationsRepository.class);
+  protected static final OperationsRepository<BuyTicketOperation> buyTicketOperationsRepository =
+      configurableApplicationContext.getBean(R2DBCEntityTemplateOperationsRepository.class);
   private static final Resource schemaResource = new ClassPathResource("schema.sql");
   private static final Resource clearDBResource = new ClassPathResource("cleardb.sql");
 
