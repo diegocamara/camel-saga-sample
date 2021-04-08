@@ -1,4 +1,4 @@
-package com.example.hotel.application.web.controller.transaction.booking;
+package com.example.hotel.infrasctructure.operation.transaction.booking;
 
 import com.example.hotel.domain.feature.CancelBookingById;
 import com.example.hotel.domain.model.CancelBookingInput;

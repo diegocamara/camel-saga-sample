@@ -1,4 +1,4 @@
-package com.example.flight.application.web.controller.transaction.buyticket;
+package com.example.flight.infrastructure.operation.transaction.buyticket;
 
 import com.example.flight.domain.feature.CancelTicketPurchase;
 import com.example.flight.domain.model.CancelTicketPurchaseInput;

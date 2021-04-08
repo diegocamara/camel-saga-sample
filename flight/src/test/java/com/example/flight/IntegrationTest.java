@@ -1,8 +1,8 @@
 package com.example.flight;
 
-import com.example.flight.application.web.controller.transaction.buyticket.BuyTicketOperation;
 import com.example.flight.domain.model.TicketsCustomerRelationshipRepository;
 import com.example.flight.infrastructure.operation.OperationsRepository;
+import com.example.flight.infrastructure.operation.transaction.buyticket.BuyTicketOperation;
 import com.example.flight.infrastructure.repository.impl.R2DBCEntityTemplateOperationsRepository;
 import com.example.flight.infrastructure.repository.impl.R2DBCEntityTemplateTicketsRepository;
 import com.example.flight.infrastructure.repository.reactive.ReactiveOperationsRepository;

@@ -1,8 +1,8 @@
 package com.example.hotel.application.web.controller;
 
-import com.example.hotel.application.web.controller.transaction.booking.BookingTransactionManager;
 import com.example.hotel.application.web.model.BookingRequest;
 import com.example.hotel.application.web.model.BookingResponse;
+import com.example.hotel.infrasctructure.operation.transaction.booking.BookingTransactionManager;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

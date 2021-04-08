@@ -21,7 +21,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class OkHttpHotelWebClient implements HotelWebClient {
 
-  private static final String TRANSACTION_REFERENCE_HEADER = "transaction-reference";
+  private static final String OPERATION_REFERENCE_HEADER = "operation-reference";
   private final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
   private final OkHttpClient okHttpClient;
@@ -30,7 +30,7 @@ public class OkHttpHotelWebClient implements HotelWebClient {
 
   @Override
   @SneakyThrows
-  public BookingResponse createBooking(BookingRequest bookingRequest, UUID transactionId) {
+  public BookingResponse createBooking(BookingRequest bookingRequest, UUID operationReference) {
     final var hotelProperties = webClientProperties.getHotel();
     final var url = hotelProperties.getBaseUrl() + "/booking";
     final var requestBody =
@@ -38,29 +38,32 @@ public class OkHttpHotelWebClient implements HotelWebClient {
     final var request =
         new Request.Builder()
             .url(url)
-            .header(TRANSACTION_REFERENCE_HEADER, transactionId.toString())
+            .header(OPERATION_REFERENCE_HEADER, operationReference.toString())
             .post(requestBody)
             .build();
     try (final var response = okHttpClient.newCall(request).execute()) {
-
       if (response.isSuccessful()) {
         final var bookingResponse =
             objectMapper.readValue(
                 Objects.requireNonNull(response.body()).bytes(), BookingResponse.class);
-        bookingResponse.setTransactionId(transactionId);
+        bookingResponse.setTransactionId(operationReference);
         return bookingResponse;
       }
-
       throw new HttpClientException(response);
     }
   }
 
   @Override
   @SneakyThrows
-  public void cancelBooking(UUID bookingId) {
+  public void cancelBooking(UUID operationReference) {
     final var hotelProperties = webClientProperties.getHotel();
-    final var url = hotelProperties.getBaseUrl() + "/booking/" + bookingId.toString();
-    final var request = new Request.Builder().url(url).delete().build();
+    final var url = hotelProperties.getBaseUrl() + "/booking";
+    final var request =
+        new Request.Builder()
+            .url(url)
+            .header(OPERATION_REFERENCE_HEADER, operationReference.toString())
+            .delete()
+            .build();
     try (final var response = okHttpClient.newCall(request).execute()) {
       if (!response.isSuccessful()) {
         throw new HttpClientException(response);

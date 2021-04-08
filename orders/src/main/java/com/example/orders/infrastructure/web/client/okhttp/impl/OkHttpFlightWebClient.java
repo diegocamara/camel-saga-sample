@@ -5,7 +5,6 @@ import com.example.orders.infrastructure.web.client.FlightWebClient;
 import com.example.orders.infrastructure.web.client.okhttp.exception.HttpClientException;
 import com.example.orders.infrastructure.web.model.BuyTicketRequest;
 import com.example.orders.infrastructure.web.model.BuyTicketResponse;
-import com.example.orders.infrastructure.web.model.CancelTicketPurchaseRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -22,7 +21,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class OkHttpFlightWebClient implements FlightWebClient {
 
-  private static final String TRANSACTION_REFERENCE_HEADER = "transaction-reference";
+  private static final String OPERATION_REFERENCE_HEADER = "operation-reference";
   private final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
   private final OkHttpClient okHttpClient;
@@ -31,7 +30,7 @@ public class OkHttpFlightWebClient implements FlightWebClient {
 
   @Override
   @SneakyThrows
-  public BuyTicketResponse buyTicket(BuyTicketRequest buyTicketRequest, UUID transactionId) {
+  public BuyTicketResponse buyTicket(BuyTicketRequest buyTicketRequest, UUID operationReference) {
     final var flightProperties = webClientProperties.getFlight();
     final var url = flightProperties.getBaseUrl() + "/tickets";
     final var requestBody =
@@ -39,7 +38,7 @@ public class OkHttpFlightWebClient implements FlightWebClient {
     final var request =
         new Request.Builder()
             .url(url)
-            .header(TRANSACTION_REFERENCE_HEADER, transactionId.toString())
+            .header(OPERATION_REFERENCE_HEADER, operationReference.toString())
             .post(requestBody)
             .build();
     try (final var response = okHttpClient.newCall(request).execute()) {
@@ -47,7 +46,7 @@ public class OkHttpFlightWebClient implements FlightWebClient {
         final var buyTicketResponse =
             objectMapper.readValue(
                 Objects.requireNonNull(response.body()).bytes(), BuyTicketResponse.class);
-        buyTicketResponse.setTransactionId(transactionId);
+        buyTicketResponse.setOperationReference(operationReference);
         return buyTicketResponse;
       }
       throw new HttpClientException(response);
@@ -56,12 +55,15 @@ public class OkHttpFlightWebClient implements FlightWebClient {
 
   @Override
   @SneakyThrows
-  public void cancelTicket(CancelTicketPurchaseRequest cancelTicketPurchaseRequest) {
+  public void cancelTicket(UUID operationReference) {
     final var flightProperties = webClientProperties.getFlight();
     final var url = flightProperties.getBaseUrl() + "/tickets";
-    final var requestBody =
-        RequestBody.create(objectMapper.writeValueAsString(cancelTicketPurchaseRequest), JSON);
-    final var request = new Request.Builder().url(url).delete(requestBody).build();
+    final var request =
+        new Request.Builder()
+            .url(url)
+            .header(OPERATION_REFERENCE_HEADER, operationReference.toString())
+            .delete()
+            .build();
     try (final var response = okHttpClient.newCall(request).execute()) {
       if (!response.isSuccessful()) {
         throw new HttpClientException(response);

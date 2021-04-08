@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import org.apache.camel.Predicate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.SagaPropagation;
-import org.apache.camel.saga.InMemorySagaService;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -28,6 +27,7 @@ public class OrderSaga extends RouteBuilder {
   public static final String BOOKING_HOTEL_ROUTE_ID = "booking-hotel";
   public static final String CANCEL_BOOKING_HOTEL_ROUTE_ID = "cancel-booking-hotel";
   public static final String COMPLETE_ORDER_ROUTE_ID = "complete-order";
+  public static final String OPERATION_REFERENCE_HEADER = "operationReference";
 
   private final FlightWebClient flightWebClient;
   private final HotelWebClient hotelWebClient;
@@ -36,7 +36,7 @@ public class OrderSaga extends RouteBuilder {
   @Override
   public void configure() throws Exception {
 
-    getContext().addService(new InMemorySagaService());
+    //    getContext().addService(new InMemorySagaService());
 
     final var DIRECT_PREFIX = "direct:";
     final var CREATE_ORDER_ENDPOINT = DIRECT_PREFIX + CREATE_ORDER_ROUTE_ID;
@@ -48,7 +48,7 @@ public class OrderSaga extends RouteBuilder {
     from(CREATE_ORDER_ENDPOINT)
         .id(CREATE_ORDER_ROUTE_ID)
         .saga()
-        .setHeader("transactionId", simple(UUID.randomUUID().toString()))
+        .setHeader(OPERATION_REFERENCE_HEADER, simple(UUID.randomUUID().toString()))
         .timeout(Duration.ofMinutes(1))
         .setProperty("order", body())
         .choice()
@@ -65,16 +65,15 @@ public class OrderSaga extends RouteBuilder {
         .propagation(SagaPropagation.MANDATORY)
         .compensation(CANCEL_FLIGHT_TICKET_ENDPOINT)
         .option("order", body())
+        .option(OPERATION_REFERENCE_HEADER, header(OPERATION_REFERENCE_HEADER))
         .bean(this, "buyTicketRequest")
-        .bean(flightWebClient, "buyTicket(${body}, ${header.transactionId})")
+        .bean(flightWebClient, "buyTicket(${body}, ${header.operationReference})")
         .bean(this, "updateOrderForBuyTicket(${exchangeProperty.order}, ${body})")
         .end();
 
     from(CANCEL_FLIGHT_TICKET_ENDPOINT)
-        .log("********** ${body}")
         .id(CANCEL_FLIGHT_TICKET_ROUTE_ID)
-        .transform(header("order"))
-        .bean(this, "cancelTicketPurchaseRequest")
+        .transform(header(OPERATION_REFERENCE_HEADER))
         .bean(flightWebClient, "cancelTicket")
         .end();
 
@@ -83,16 +82,16 @@ public class OrderSaga extends RouteBuilder {
         .transform(exchangeProperty("order"))
         .saga()
         .propagation(SagaPropagation.MANDATORY)
-        //        .compensation(CANCEL_BOOKING_HOTEL_ENDPOINT)
+        .compensation(CANCEL_BOOKING_HOTEL_ENDPOINT)
         .option("order", body())
+        .option(OPERATION_REFERENCE_HEADER, header(OPERATION_REFERENCE_HEADER))
         .bean(this, "bookingRequest")
-        .bean(hotelWebClient, "createBooking(${body}, ${headers.transactionId})")
+        .bean(hotelWebClient, "createBooking(${body}, ${headers.operationReference})")
         .bean(this, "updateOrderForBooking(${exchangeProperty.order}, ${body})");
 
     from(CANCEL_BOOKING_HOTEL_ENDPOINT)
         .id(CANCEL_BOOKING_HOTEL_ROUTE_ID)
-        .transform(header("order"))
-        .bean(this, "bookingId")
+        .transform(header(OPERATION_REFERENCE_HEADER))
         .bean(hotelWebClient, "cancelBooking");
   }
 
@@ -114,10 +113,6 @@ public class OrderSaga extends RouteBuilder {
             .orElseThrow();
 
     return new CancelTicketPurchaseRequest(ticketId, order.getCustomer().getId());
-  }
-
-  protected UUID bookingId(Order order) {
-    return null;
   }
 
   protected BookingRequest bookingRequest(Order order) {

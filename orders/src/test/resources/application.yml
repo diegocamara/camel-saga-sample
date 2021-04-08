@@ -9,6 +9,13 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration
+camel:
+  service:
+    lra:
+      enabled: true
+  lra:
+    coordinator-url: ${LRA_COORDINATOR_BASE_URL:http://localhost:9000}
+    local-participant-url: ${LRA_LOCAL_PARTICIPANT_BASE_URL:http://localhost:8080}
 web:
   client:
     flight:

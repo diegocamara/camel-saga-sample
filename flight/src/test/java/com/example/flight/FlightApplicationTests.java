@@ -1,7 +1,6 @@
 package com.example.flight;
 
 import com.example.flight.application.web.controller.TicketsController;
-import com.example.flight.application.web.controller.transaction.buyticket.BuyTicketOperation;
 import com.example.flight.application.web.model.BuyTicketRequest;
 import com.example.flight.application.web.model.BuyTicketResponse;
 import com.example.flight.domain.model.Customer;
@@ -12,6 +11,7 @@ import com.example.flight.infrastructure.gateway.model.CreditResponse;
 import com.example.flight.infrastructure.gateway.model.DebitRequest;
 import com.example.flight.infrastructure.gateway.model.DebitResponse;
 import com.example.flight.infrastructure.operation.Status;
+import com.example.flight.infrastructure.operation.transaction.buyticket.BuyTicketOperation;
 import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Assertions;

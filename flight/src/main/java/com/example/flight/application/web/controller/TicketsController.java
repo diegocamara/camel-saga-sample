@@ -1,8 +1,8 @@
 package com.example.flight.application.web.controller;
 
-import com.example.flight.application.web.controller.transaction.buyticket.BuyTicketTransactionManager;
 import com.example.flight.application.web.model.BuyTicketRequest;
 import com.example.flight.application.web.model.BuyTicketResponse;
+import com.example.flight.infrastructure.operation.transaction.buyticket.BuyTicketTransactionManager;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -11,7 +11,7 @@ import java.util.UUID;
 public class BuyTicketResponse {
   private TicketWebModel ticket;
   private CustomerWebModel customer;
-  private UUID transactionId;
+  private UUID operationReference;
 
   @Override
   public boolean equals(Object o) {
@@ -20,11 +20,11 @@ public class BuyTicketResponse {
     BuyTicketResponse that = (BuyTicketResponse) o;
     return Objects.equals(ticket, that.ticket)
         && Objects.equals(customer, that.customer)
-        && Objects.equals(transactionId, that.transactionId);
+        && Objects.equals(operationReference, that.operationReference);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ticket, customer, transactionId);
+    return Objects.hash(ticket, customer, operationReference);
   }
 }

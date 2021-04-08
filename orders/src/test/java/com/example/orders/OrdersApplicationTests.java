@@ -22,7 +22,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 class OrdersApplicationTests extends IntegrationTest {
 
-  public static final String TRANSACTION_REFERENCE_HEADER = "transaction-reference";
+  public static final String OPERATION_REFERENCE_HEADER = "operation-reference";
   private final UUID customerId = UUID.randomUUID();
 
   @Test
@@ -98,14 +98,14 @@ class OrdersApplicationTests extends IntegrationTest {
         1,
         postRequestedFor(urlEqualTo("/tickets"))
             .withHeader(
-                TRANSACTION_REFERENCE_HEADER,
-                equalTo(buyTicketResponseDocument.getTransactionId().toString()))
+                OPERATION_REFERENCE_HEADER,
+                equalTo(buyTicketResponseDocument.getOperationReference().toString()))
             .withRequestBody(equalToJson(writeValueAsString(buyTicketRequest))));
     verify(
         1,
         postRequestedFor(urlEqualTo("/booking"))
             .withHeader(
-                TRANSACTION_REFERENCE_HEADER,
+                OPERATION_REFERENCE_HEADER,
                 equalTo(bookingResponseDocument.getTransactionId().toString()))
             .withRequestBody(equalToJson(writeValueAsString(bookingRequest))));
     verify(0, deleteRequestedFor(urlEqualTo("/tickets")));
@@ -147,9 +147,9 @@ class OrdersApplicationTests extends IntegrationTest {
 
     mockBookingRequestFail(bookingRequest);
 
-    final var cancelTicketPurchaseRequest = new CancelTicketPurchaseRequest(ticketId, customerId);
+    mockCancelTicketPurchaseRequestSuccess();
 
-    mockCancelTicketPurchaseRequestSuccess(cancelTicketPurchaseRequest);
+    mockCancelBookingRequestSuccess();
 
     final var createOrderResponse = createOrderRequestSpecification.post("/orders");
 
@@ -159,25 +159,31 @@ class OrdersApplicationTests extends IntegrationTest {
     verify(
         1,
         postRequestedFor(urlEqualTo("/tickets"))
-            .withHeader(TRANSACTION_REFERENCE_HEADER, matching(".*"))
+            .withHeader(OPERATION_REFERENCE_HEADER, matching(".*"))
             .withRequestBody(equalToJson(writeValueAsString(buyTicketRequest))));
     verify(
         1,
         postRequestedFor(urlEqualTo("/booking"))
-            .withHeader(TRANSACTION_REFERENCE_HEADER, matching(".*"))
+            .withHeader(OPERATION_REFERENCE_HEADER, matching(".*"))
             .withRequestBody(equalToJson(writeValueAsString(bookingRequest))));
     verify(
         1,
         deleteRequestedFor(urlEqualTo("/tickets"))
-            .withRequestBody(equalToJson(writeValueAsString(cancelTicketPurchaseRequest))));
-    verify(0, deleteRequestedFor(urlEqualTo("/booking")));
+            .withHeader(OPERATION_REFERENCE_HEADER, matching(".*")));
+    verify(1, deleteRequestedFor(urlEqualTo("/booking")));
   }
 
-  private void mockCancelTicketPurchaseRequestSuccess(
-      CancelTicketPurchaseRequest cancelTicketPurchaseRequest) {
+  private void mockCancelTicketPurchaseRequestSuccess() {
     stubFor(
         delete(urlEqualTo("/tickets"))
-            .withRequestBody(equalToJson(writeValueAsString(cancelTicketPurchaseRequest)))
+            .withHeader(OPERATION_REFERENCE_HEADER, matching(".*"))
+            .willReturn(aResponse().withStatus(HttpStatus.OK.value())));
+  }
+
+  private void mockCancelBookingRequestSuccess() {
+    stubFor(
+        delete(urlEqualTo("/booking"))
+            .withHeader(OPERATION_REFERENCE_HEADER, matching(".*"))
             .willReturn(aResponse().withStatus(HttpStatus.OK.value())));
   }
 

@@ -1,9 +1,9 @@
 package com.example.hotel.infrasctructure.repository.impl;
 
-import com.example.hotel.application.web.controller.transaction.booking.BookingOperation;
 import com.example.hotel.application.web.model.BookingResponse;
 import com.example.hotel.infrasctructure.operation.OperationsRepository;
 import com.example.hotel.infrasctructure.operation.Status;
+import com.example.hotel.infrasctructure.operation.transaction.booking.BookingOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;

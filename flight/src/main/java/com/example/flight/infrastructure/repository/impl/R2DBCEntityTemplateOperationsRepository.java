@@ -1,9 +1,9 @@
 package com.example.flight.infrastructure.repository.impl;
 
-import com.example.flight.application.web.controller.transaction.buyticket.BuyTicketOperation;
 import com.example.flight.application.web.model.BuyTicketResponse;
 import com.example.flight.infrastructure.operation.OperationsRepository;
 import com.example.flight.infrastructure.operation.Status;
+import com.example.flight.infrastructure.operation.transaction.buyticket.BuyTicketOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;

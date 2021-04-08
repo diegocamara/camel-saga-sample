@@ -1,7 +1,6 @@
 package com.example.hotel;
 
 import com.example.hotel.application.web.controller.BookingController;
-import com.example.hotel.application.web.controller.transaction.booking.BookingOperation;
 import com.example.hotel.application.web.model.BookingRequest;
 import com.example.hotel.application.web.model.BookingResponse;
 import com.example.hotel.domain.model.Bedroom;
@@ -13,6 +12,7 @@ import com.example.hotel.infrasctructure.gateway.model.CreditResponse;
 import com.example.hotel.infrasctructure.gateway.model.DebitRequest;
 import com.example.hotel.infrasctructure.gateway.model.DebitResponse;
 import com.example.hotel.infrasctructure.operation.Status;
+import com.example.hotel.infrasctructure.operation.transaction.booking.BookingOperation;
 import io.restassured.RestAssured;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Assertions;
