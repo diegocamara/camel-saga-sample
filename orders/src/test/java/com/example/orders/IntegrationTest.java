@@ -13,6 +13,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.DockerImageName;
 
@@ -24,8 +25,9 @@ public class IntegrationTest {
 
   protected static final GenericContainer<?> lraCoordinator =
       new GenericContainer<>(
-          new ImageFromDockerfile()
-              .withFileFromClasspath("Dockerfile", "lra-coordinator/Dockerfile"));
+              new ImageFromDockerfile()
+                  .withFileFromClasspath("Dockerfile", "lra-coordinator/Dockerfile"))
+          .waitingFor(Wait.forLogMessage(".*Installed features.*", 1));
 
   protected static final MongoDBContainer mongoDBContainer =
       new MongoDBContainer(DockerImageName.parse("mongo:4.4.4"));
@@ -43,12 +45,13 @@ public class IntegrationTest {
     wireMockServer.start();
     WireMock.configureFor(wireMockServer.port());
     System.setProperty(SERVER_PORT, "8080");
-    System.setProperty(
-        LRA_COORDINATOR_BASE_URL,
-        "http://"
-            + lraCoordinator.getContainerIpAddress()
-            + ":"
-            + lraCoordinator.getMappedPort(8080));
+    //    System.setProperty(
+    //        LRA_COORDINATOR_BASE_URL,
+    //        "http://"
+    //            + lraCoordinator.getContainerIpAddress()
+    //            + ":"
+    //            + lraCoordinator.getMappedPort(8080));
+    System.setProperty(LRA_COORDINATOR_BASE_URL, "http://localhost:9000");
     System.setProperty(
         LRA_LOCAL_PARTICIPANT_BASE_URL, "http://localhost:" + System.getProperty(SERVER_PORT));
 

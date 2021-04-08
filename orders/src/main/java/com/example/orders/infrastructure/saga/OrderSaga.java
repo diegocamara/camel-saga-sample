@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import org.apache.camel.Predicate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.SagaPropagation;
+import org.apache.camel.saga.CamelSagaService;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -32,10 +33,11 @@ public class OrderSaga extends RouteBuilder {
   private final FlightWebClient flightWebClient;
   private final HotelWebClient hotelWebClient;
   private final SpringDataOrdersRepository springDataOrdersRepository;
+  private final CamelSagaService camelSagaService;
 
   @Override
   public void configure() throws Exception {
-
+    getContext().addService(camelSagaService);
     //    getContext().addService(new InMemorySagaService());
 
     final var DIRECT_PREFIX = "direct:";
@@ -73,6 +75,7 @@ public class OrderSaga extends RouteBuilder {
 
     from(CANCEL_FLIGHT_TICKET_ENDPOINT)
         .id(CANCEL_FLIGHT_TICKET_ROUTE_ID)
+        .log("************** ${headers}")
         .transform(header(OPERATION_REFERENCE_HEADER))
         .bean(flightWebClient, "cancelTicket")
         .end();
