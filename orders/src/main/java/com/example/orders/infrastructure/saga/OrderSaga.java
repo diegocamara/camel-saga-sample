@@ -37,8 +37,8 @@ public class OrderSaga extends RouteBuilder {
 
   @Override
   public void configure() throws Exception {
+
     getContext().addService(camelSagaService);
-    //    getContext().addService(new InMemorySagaService());
 
     final var DIRECT_PREFIX = "direct:";
     final var CREATE_ORDER_ENDPOINT = DIRECT_PREFIX + CREATE_ORDER_ROUTE_ID;
@@ -58,8 +58,7 @@ public class OrderSaga extends RouteBuilder {
         .to(BUY_FLIGHT_TICKET_ENDPOINT)
         .choice()
         .when(containsHotelBooking())
-        .to(BOOKING_HOTEL_ENDPOINT)
-        .end();
+        .to(BOOKING_HOTEL_ENDPOINT);
 
     from(BUY_FLIGHT_TICKET_ENDPOINT)
         .id(BUY_FLIGHT_TICKET_ROUTE_ID)
@@ -70,15 +69,12 @@ public class OrderSaga extends RouteBuilder {
         .option(OPERATION_REFERENCE_HEADER, header(OPERATION_REFERENCE_HEADER))
         .bean(this, "buyTicketRequest")
         .bean(flightWebClient, "buyTicket(${body}, ${header.operationReference})")
-        .bean(this, "updateOrderForBuyTicket(${exchangeProperty.order}, ${body})")
-        .end();
+        .bean(this, "updateOrderForBuyTicket(${exchangeProperty.order}, ${body})");
 
     from(CANCEL_FLIGHT_TICKET_ENDPOINT)
         .id(CANCEL_FLIGHT_TICKET_ROUTE_ID)
-        .log("************** ${headers}")
         .transform(header(OPERATION_REFERENCE_HEADER))
-        .bean(flightWebClient, "cancelTicket")
-        .end();
+        .bean(flightWebClient, "cancelTicket");
 
     from(BOOKING_HOTEL_ENDPOINT)
         .id(BOOKING_HOTEL_ROUTE_ID)
