@@ -16,7 +16,6 @@ import org.apache.camel.saga.CamelSagaService;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.UUID;
 
 @Component
 @AllArgsConstructor
@@ -50,7 +49,6 @@ public class OrderSaga extends RouteBuilder {
     from(CREATE_ORDER_ENDPOINT)
         .id(CREATE_ORDER_ROUTE_ID)
         .saga()
-        .setHeader(OPERATION_REFERENCE_HEADER, simple(UUID.randomUUID().toString()))
         .timeout(Duration.ofMinutes(1))
         .setProperty("order", body())
         .choice()
@@ -66,14 +64,13 @@ public class OrderSaga extends RouteBuilder {
         .propagation(SagaPropagation.MANDATORY)
         .compensation(CANCEL_FLIGHT_TICKET_ENDPOINT)
         .option("order", body())
-        .option(OPERATION_REFERENCE_HEADER, header(OPERATION_REFERENCE_HEADER))
         .bean(this, "buyTicketRequest")
-        .bean(flightWebClient, "buyTicket(${body}, ${header.operationReference})")
+        .bean(flightWebClient, "buyTicket(${body}, ${exchangeProperty.order.id})")
         .bean(this, "updateOrderForBuyTicket(${exchangeProperty.order}, ${body})");
 
     from(CANCEL_FLIGHT_TICKET_ENDPOINT)
         .id(CANCEL_FLIGHT_TICKET_ROUTE_ID)
-        .transform(header(OPERATION_REFERENCE_HEADER))
+        .transform(simple("${headers.order.id}"))
         .bean(flightWebClient, "cancelTicket");
 
     from(BOOKING_HOTEL_ENDPOINT)
@@ -83,14 +80,13 @@ public class OrderSaga extends RouteBuilder {
         .propagation(SagaPropagation.MANDATORY)
         .compensation(CANCEL_BOOKING_HOTEL_ENDPOINT)
         .option("order", body())
-        .option(OPERATION_REFERENCE_HEADER, header(OPERATION_REFERENCE_HEADER))
         .bean(this, "bookingRequest")
-        .bean(hotelWebClient, "createBooking(${body}, ${headers.operationReference})")
+        .bean(hotelWebClient, "createBooking(${body}, ${exchangeProperty.order.id})")
         .bean(this, "updateOrderForBooking(${exchangeProperty.order}, ${body})");
 
     from(CANCEL_BOOKING_HOTEL_ENDPOINT)
         .id(CANCEL_BOOKING_HOTEL_ROUTE_ID)
-        .transform(header(OPERATION_REFERENCE_HEADER))
+        .transform(simple("${headers.order.id}"))
         .bean(hotelWebClient, "cancelBooking");
   }
 

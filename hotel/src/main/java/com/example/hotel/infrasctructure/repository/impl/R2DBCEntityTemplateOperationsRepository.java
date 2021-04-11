@@ -31,7 +31,7 @@ public class R2DBCEntityTemplateOperationsRepository
         .getDatabaseClient()
         .sql(
             "INSERT INTO operations (id, status, output_field) VALUES (:id, :status, :outputField)")
-        .bind("id", operation.getId().toString())
+        .bind("id", operation.getId())
         .bind("status", operation.getStatus().toString())
         .bind("outputField", output)
         .fetch()
@@ -44,7 +44,7 @@ public class R2DBCEntityTemplateOperationsRepository
     return r2dbcEntityTemplate
         .getDatabaseClient()
         .sql("SELECT * FROM operations WHERE id = :operationReference")
-        .bind("operationReference", operationReference.toString())
+        .bind("operationReference", operationReference)
         .map(this::operation)
         .first();
   }
@@ -56,7 +56,7 @@ public class R2DBCEntityTemplateOperationsRepository
     return r2dbcEntityTemplate
         .getDatabaseClient()
         .sql("UPDATE operations SET status = :status, output_field = :outputField WHERE id = :id")
-        .bind("id", operation.getId().toString())
+        .bind("id", operation.getId())
         .bind("status", operation.getStatus().toString())
         .bind("outputField", output)
         .fetch()

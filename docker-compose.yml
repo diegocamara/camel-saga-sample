@@ -11,15 +11,81 @@ services:
       - POSTGRES_PASSWORD=postgres123
     networks:
       - services-network
-  #rabbitmq:
-  #  image: rabbitmq
-  #  build: rabbitmq/
-  #  container_name: rabbitmq
-  #  ports:
-  #    - "5672:5672"
-  #    - "15672:15672"
-  #  networks:
-  #    - services-network
+  mongodb:
+    image: "mongo"
+    container_name: "mongodb_orders"   
+    ports:
+      - "27017:27017"
+    networks: 
+      - services-network
+  orders:
+    image: orders
+    build: orders/
+    container_name: orders_service
+    depends_on:
+      - "mongodb"
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_HOST=mongodb
+      - FLIGHT_SERVICE_HOST=flight
+      - FLIGHT_SERVICE_PORT=8081
+      - HOTEL_SERVICE_HOST=hotel
+      - HOTEL_SERVICE_PORT=8082
+    networks: 
+      - services-network
+  flight:
+    image: flight
+    build: flight/
+    container_name: flight_service
+    depends_on:
+      - "postgresql"
+      - "payments"
+    ports:
+      - "8081:8080"
+    environment:
+      - DATABASE_HOST=postgresql
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=flightdb
+      - DATABASE_USERNAME=flight_service
+      - DATABASE_PASSWORD=flight_service_123
+      - PAYMENTS_BASE_URL=http://payments:8083     
+    networks: 
+      - services-network
+  hotel:
+    image: hotel
+    build: hotel/
+    container_name: hotel_service
+    depends_on:
+      - "postgresql"
+      - "payments"
+    ports:
+      - "8082:8080"
+    environment:
+      - DATABASE_HOST=postgresql
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=hoteldb
+      - DATABASE_USERNAME=hotel_service
+      - DATABASE_PASSWORD=hotel_service_123
+      - PAYMENTS_BASE_URL=http://payments:8083     
+    networks: 
+      - services-network
+  payments:
+    image: payments
+    build: payments/
+    container_name: payments_service
+    depends_on:
+      - "postgresql"
+    ports:
+      - "8083:8080"
+    environment:
+      - DATABASE_HOST=postgresql
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=paymentsdb
+      - DATABASE_USERNAME=payments_service
+      - DATABASE_PASSWORD=payments_service_123        
+    networks: 
+      - services-network
 networks:
   services-network:
     driver: "bridge"

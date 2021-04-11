@@ -25,8 +25,8 @@ public class R2DBCEntityTemplateTicketsCustomerRelationshipRepository
     return r2dbcEntityTemplate
         .getDatabaseClient()
         .sql("INSERT INTO ticket_customer (ticket_id, customer_id) VALUES (:ticketId, :customerId)")
-        .bind("ticketId", ticketCustomerRelationship.getTicket().getId().toString())
-        .bind("customerId", ticketCustomerRelationship.getCustomer().getId().toString())
+        .bind("ticketId", ticketCustomerRelationship.getTicket().getId())
+        .bind("customerId", ticketCustomerRelationship.getCustomer().getId())
         .fetch()
         .rowsUpdated()
         .map(rowsUpdated -> rowsUpdated)
@@ -41,8 +41,8 @@ public class R2DBCEntityTemplateTicketsCustomerRelationshipRepository
             "SELECT * FROM ticket_customer AS ticket_customer"
                 + " INNER JOIN tickets as tickets ON tickets.id = ticket_customer.ticket_id"
                 + " WHERE ticket_id = :ticketId and customer_id = :customerId")
-        .bind("ticketId", ticketId.toString())
-        .bind("customerId", customerId.toString())
+        .bind("ticketId", ticketId)
+        .bind("customerId", customerId)
         .map(row -> row)
         .first()
         .map(this::ticketCustomerRelationship);
@@ -55,8 +55,8 @@ public class R2DBCEntityTemplateTicketsCustomerRelationshipRepository
         .sql(
             "DELETE FROM ticket_customer"
                 + " WHERE ticket_id = :ticketId and customer_id = :customerId")
-        .bind("ticketId", ticketCustomerRelationship.getTicket().getId().toString())
-        .bind("customerId", ticketCustomerRelationship.getCustomer().getId().toString())
+        .bind("ticketId", ticketCustomerRelationship.getTicket().getId())
+        .bind("customerId", ticketCustomerRelationship.getCustomer().getId())
         .fetch()
         .rowsUpdated()
         .map(rowsUpdated -> rowsUpdated)

@@ -1,6 +1,7 @@
 package com.example.flight.infrastructure.operation.transaction.buyticket;
 
 import com.example.flight.application.web.model.BuyTicketRequest;
+import com.example.flight.infrastructure.operation.OperationAlreadyExistsException;
 import com.example.flight.infrastructure.operation.OperationsRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,9 @@ public class BuyTicketTransactionManager {
         .execute(buyTicketRequest, operationReference)
         .onErrorResume(
             throwable ->
-                buyTicketOperationsRepository.findByOperationReference(operationReference));
+                OperationAlreadyExistsException.class.isAssignableFrom(throwable.getClass())
+                    ? buyTicketOperationsRepository.findByOperationReference(operationReference)
+                    : Mono.error(throwable));
   }
 
   public Mono<Void> rollback(UUID operationReference) {

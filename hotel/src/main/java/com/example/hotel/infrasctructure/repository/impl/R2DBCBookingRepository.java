@@ -39,7 +39,7 @@ public class R2DBCBookingRepository implements BookingRepository {
                 + " bedrooms.price AS bedroom_price"
                 + " FROM booking AS booking"
                 + " INNER JOIN bedrooms AS bedrooms ON bedrooms.id = booking.bedroom_id WHERE booking.id = :bookingId")
-        .bind("bookingId", id.toString())
+        .bind("bookingId", id)
         .map(row -> row)
         .first()
         .map(RepositoryUtils::booking);

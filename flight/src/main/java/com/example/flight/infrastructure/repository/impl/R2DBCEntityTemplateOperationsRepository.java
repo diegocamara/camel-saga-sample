@@ -1,6 +1,7 @@
 package com.example.flight.infrastructure.repository.impl;
 
 import com.example.flight.application.web.model.BuyTicketResponse;
+import com.example.flight.infrastructure.operation.OperationAlreadyExistsException;
 import com.example.flight.infrastructure.operation.OperationsRepository;
 import com.example.flight.infrastructure.operation.Status;
 import com.example.flight.infrastructure.operation.transaction.buyticket.BuyTicketOperation;
@@ -9,6 +10,7 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -31,12 +33,17 @@ public class R2DBCEntityTemplateOperationsRepository
         .getDatabaseClient()
         .sql(
             "INSERT INTO operations (id, status, output_field) VALUES (:id, :status, :outputField)")
-        .bind("id", operation.getId().toString())
+        .bind("id", operation.getId())
         .bind("status", operation.getStatus().toString())
         .bind("outputField", output)
         .fetch()
         .rowsUpdated()
-        .then();
+        .then()
+        .onErrorResume(
+            throwable ->
+                DataIntegrityViolationException.class.isAssignableFrom(throwable.getClass())
+                    ? Mono.error(OperationAlreadyExistsException::new)
+                    : Mono.error(throwable));
   }
 
   @Override
@@ -44,7 +51,7 @@ public class R2DBCEntityTemplateOperationsRepository
     return r2dbcEntityTemplate
         .getDatabaseClient()
         .sql("SELECT * FROM operations WHERE id = :operationReference")
-        .bind("operationReference", operationReference.toString())
+        .bind("operationReference", operationReference)
         .map(this::operation)
         .first();
   }
@@ -56,7 +63,7 @@ public class R2DBCEntityTemplateOperationsRepository
     return r2dbcEntityTemplate
         .getDatabaseClient()
         .sql("UPDATE operations SET status = :status, output_field = :outputField WHERE id = :id")
-        .bind("id", operation.getId().toString())
+        .bind("id", operation.getId())
         .bind("status", operation.getStatus().toString())
         .bind("outputField", output)
         .fetch()
