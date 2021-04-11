@@ -28,10 +28,8 @@ services:
       - "8080:8080"
     environment:
       - DATABASE_HOST=mongodb
-      - FLIGHT_SERVICE_HOST=flight
-      - FLIGHT_SERVICE_PORT=8081
-      - HOTEL_SERVICE_HOST=hotel
-      - HOTEL_SERVICE_PORT=8082
+      - FLIGHT_SERVICE_BASE_URL=http://flight:8080
+      - HOTEL_SERVICE_BASE_URL=http://hotel:8080
     networks: 
       - services-network
   flight:
@@ -40,16 +38,14 @@ services:
     container_name: flight_service
     depends_on:
       - "postgresql"
-      - "payments"
-    ports:
-      - "8081:8080"
+      - "payments"   
     environment:
       - DATABASE_HOST=postgresql
       - DATABASE_PORT=5432
       - DATABASE_NAME=flightdb
       - DATABASE_USERNAME=flight_service
       - DATABASE_PASSWORD=flight_service_123
-      - PAYMENTS_BASE_URL=http://payments:8083     
+      - PAYMENTS_BASE_URL=http://payments:8080
     networks: 
       - services-network
   hotel:
@@ -58,16 +54,14 @@ services:
     container_name: hotel_service
     depends_on:
       - "postgresql"
-      - "payments"
-    ports:
-      - "8082:8080"
+      - "payments"    
     environment:
       - DATABASE_HOST=postgresql
       - DATABASE_PORT=5432
       - DATABASE_NAME=hoteldb
       - DATABASE_USERNAME=hotel_service
       - DATABASE_PASSWORD=hotel_service_123
-      - PAYMENTS_BASE_URL=http://payments:8083     
+      - PAYMENTS_BASE_URL=http://payments:8080
     networks: 
       - services-network
   payments:
@@ -75,9 +69,7 @@ services:
     build: payments/
     container_name: payments_service
     depends_on:
-      - "postgresql"
-    ports:
-      - "8083:8080"
+      - "postgresql"    
     environment:
       - DATABASE_HOST=postgresql
       - DATABASE_PORT=5432
