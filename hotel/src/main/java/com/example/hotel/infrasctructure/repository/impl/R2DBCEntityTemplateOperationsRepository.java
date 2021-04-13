@@ -1,6 +1,7 @@
 package com.example.hotel.infrasctructure.repository.impl;
 
 import com.example.hotel.application.web.model.BookingResponse;
+import com.example.hotel.infrasctructure.operation.OperationAlreadyExistsException;
 import com.example.hotel.infrasctructure.operation.OperationsRepository;
 import com.example.hotel.infrasctructure.operation.Status;
 import com.example.hotel.infrasctructure.operation.transaction.booking.BookingOperation;
@@ -9,6 +10,7 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -36,7 +38,12 @@ public class R2DBCEntityTemplateOperationsRepository
         .bind("outputField", output)
         .fetch()
         .rowsUpdated()
-        .then();
+        .then()
+        .onErrorResume(
+            throwable ->
+                DataIntegrityViolationException.class.isAssignableFrom(throwable.getClass())
+                    ? Mono.error(OperationAlreadyExistsException::new)
+                    : Mono.error(throwable));
   }
 
   @Override

@@ -1,6 +1,7 @@
 package com.example.hotel.infrasctructure.operation.transaction.booking;
 
 import com.example.hotel.application.web.model.BookingRequest;
+import com.example.hotel.infrasctructure.operation.OperationAlreadyExistsException;
 import com.example.hotel.infrasctructure.operation.OperationsRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,10 @@ public class BookingTransactionManager {
     return createBookingTransaction
         .execute(bookingRequest, operationReference)
         .onErrorResume(
-            throwable -> bookingOperationsRepository.findByOperationReference(operationReference));
+            throwable ->
+                OperationAlreadyExistsException.class.isAssignableFrom(throwable.getClass())
+                    ? bookingOperationsRepository.findByOperationReference(operationReference)
+                    : Mono.error(throwable));
   }
 
   public Mono<Void> rollback(UUID operationReference) {
